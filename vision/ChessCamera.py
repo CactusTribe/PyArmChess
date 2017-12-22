@@ -35,7 +35,7 @@ class ChessCamera(object):
         z = corners.reshape((49,2))
         board_center = z[24]
         frame_center = frame.shape[1] / 2.0, frame.shape[0] / 2.0
-        assert euclidean(board_center, frame_center) < 40.0, "Camera is not centered over chessboard."
+        #assert euclidean(board_center, frame_center) < 40.0, "Camera is not centered over chessboard."
 
         X_train = np.array(list(product(np.linspace(-3, 3, 7), np.linspace(-3, 3, 7))))
         poly = PolynomialFeatures(degree=4)
