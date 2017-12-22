@@ -134,7 +134,7 @@ class ChessCamera(object):
         img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         #img = self.adjust_gamma(img, CANNY_GAMMA)
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
-        cv2.imwrite("output/gray.jpg", img)
+        if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
         edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
         edged = cv2.dilate(edged, None)

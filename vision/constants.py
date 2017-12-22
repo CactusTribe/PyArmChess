@@ -1,4 +1,4 @@
-DEBUG = True
+DEBUG = False
 
 # BOARD CONSTANTS
 SQUARE_SIZE = 60
