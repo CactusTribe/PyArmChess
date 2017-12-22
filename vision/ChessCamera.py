@@ -121,7 +121,7 @@ class ChessCamera(object):
 
     def canny(self, image):
         img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        #img = self.adjust_gamma(img, 2)
+        #img = self.adjust_gamma(img, 1.5)
 
         # EDGE DETECTION
         sigma=0.33
@@ -132,13 +132,13 @@ class ChessCamera(object):
         #kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
         #img = cv2.filter2D(img, -1, kernel)
 
-        clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
-        img = clahe.apply(img)
-        img = cv2.GaussianBlur(img, (5, 5), 3)
+        #clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+        #img = clahe.apply(img)
+        img = cv2.GaussianBlur(img, (5,5), 0)
 
-        #cv2.imwrite("output/inter_{}".format(image_path), img)
+        cv2.imwrite("output/gray.jpg", img)
 
-        edged = cv2.Canny(img, 50, 160)
+        edged = cv2.Canny(img, 30, 50)
         edged = cv2.dilate(edged, None)
         edged = cv2.erode(edged, None)
         return edged
