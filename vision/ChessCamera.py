@@ -8,11 +8,23 @@ from sklearn.preprocessing import PolynomialFeatures
 from scipy.spatial.distance import euclidean
 from constants import *
 
+if RUN_ON_PI:
+    from picamera.array import PiRGBArray
+    from picamera import PiCamera
+
 class ChessCamera(object):
     def __init__(self, image):
-        #self.camera = cv2.VideoCapture(0)
+        if RUN_ON_PI:
+            self.camera = PiCamera()
+            self.camera.resolution = (640.480)
+
         self.IMAGE_PATH = image
-        pass
+
+
+    def get_frame(self):
+        rawCapture = PiRGBArray(self.camera)
+        self.camera.capture(rawCapture, format="bgr")
+        return rawCapture.array
 
     def _chessboard_perspective_transform_path(self):
         return ('chessboard_perspective_transform.npy')
@@ -25,8 +37,10 @@ class ChessCamera(object):
             print("No chessboard perspective transform found. Camera position recalibration required.")
 
     def calibration(self):
-        #_, frame = camera.read()
-        frame = cv2.imread(self.IMAGE_PATH)
+        if RUN_ON_PI:
+            frame = self.get_frame()
+        else:
+            frame = cv2.imread(self.IMAGE_PATH)
 
         board_size = (7,7)
         found, corners = cv2.findChessboardCorners(frame, board_size, flags=cv2.CALIB_CB_NORMALIZE_IMAGE|cv2.CALIB_CB_ADAPTIVE_THRESH)
@@ -80,7 +94,10 @@ class ChessCamera(object):
             cv2.imwrite("calibration.jpg", calib.img)
 
     def current_board_frame(self):
-        frame = cv2.imread(self.IMAGE_PATH)
+        if RUN_ON_PI:
+            frame = self.get_frame()
+        else:
+            frame = cv2.imread(self.IMAGE_PATH)
 
         M = self.get_chessboard_perspective_transform()
         frame = cv2.warpPerspective(frame, M, (BOARD_SIZE,BOARD_SIZE))
