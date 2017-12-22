@@ -6,10 +6,12 @@ from itertools import product
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from scipy.spatial.distance import euclidean
-from constants import SQUARE_SIZE, BOARD_SIZE
+from constants import *
 
 class ChessCamera(object):
-    def __init__(self):
+    def __init__(self, image):
+        #self.camera = cv2.VideoCapture(0)
+        self.IMAGE_PATH = image
         pass
 
     def _chessboard_perspective_transform_path(self):
@@ -22,20 +24,18 @@ class ChessCamera(object):
         except IOError:
             print("No chessboard perspective transform found. Camera position recalibration required.")
 
-    def calibration(self, img):
-        board_size = (7,7)
-        #_, frame = cv2.VideoCapture(0).read()
-        frame = cv2.imread(img)
-        #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        found, corners = cv2.findChessboardCorners(frame, board_size, flags=cv2.CALIB_CB_NORMALIZE_IMAGE|cv2.CALIB_CB_ADAPTIVE_THRESH)
+    def calibration(self):
+        #_, frame = camera.read()
+        frame = cv2.imread(self.IMAGE_PATH)
 
+        board_size = (7,7)
+        found, corners = cv2.findChessboardCorners(frame, board_size, flags=cv2.CALIB_CB_NORMALIZE_IMAGE|cv2.CALIB_CB_ADAPTIVE_THRESH)
         assert found, "Couldn't find chessboard."
 
         z = corners.reshape((49,2))
         board_center = z[24]
         frame_center = frame.shape[1] / 2.0, frame.shape[0] / 2.0
-
-        #assert euclidean(board_center, frame_center) < 20.0, "Camera is not centered over chessboard."
+        assert euclidean(board_center, frame_center) < 40.0, "Camera is not centered over chessboard."
 
         X_train = np.array(list(product(np.linspace(-3, 3, 7), np.linspace(-3, 3, 7))))
         poly = PolynomialFeatures(degree=4)
@@ -43,7 +43,6 @@ class ChessCamera(object):
 
         m_x = LinearRegression()
         m_x.fit(X_train, z[:, 0])
-
         m_y = LinearRegression()
         m_y.fit(X_train, z[:, 1])
 
@@ -76,164 +75,109 @@ class ChessCamera(object):
         M = cv2.getPerspectiveTransform(P, Q)
         np.save(self._chessboard_perspective_transform_path(), M)
 
+        if DEBUG:
+            calib = ChessCamera.current_board_frame()
+            cv2.imwrite("calibration.jpg", calib.img)
+
     def current_board_frame(self):
-        frame = cv2.imread(IMAGE_PATH)
+        frame = cv2.imread(self.IMAGE_PATH)
 
         M = self.get_chessboard_perspective_transform()
         frame = cv2.warpPerspective(frame, M, (BOARD_SIZE,BOARD_SIZE))
 
         #RESCALE
-        ratio = 1.015
         height, width = frame.shape[:2]
         image_center = (BOARD_SIZE / 2, BOARD_SIZE / 2)
-        img_scaled = cv2.resize(frame, (0,0), fx=ratio, fy=ratio)
-        offset_h = int(((height*ratio) - height)/2)
-        offset_w = int(((width*ratio) - width)/2)
-        frame = img_scaled[offset_h:(height+offset_h), offset_w:(width+offset_w)]
+        img_scaled = cv2.resize(frame, (0,0), fx = RESCALE_RATIO, fy = RESCALE_RATIO)
+        offset_h = int(((height * RESCALE_RATIO) - height)/2)
+        offset_w = int(((width * RESCALE_RATIO) - width)/2)
 
-        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = img_scaled[offset_h:(height+offset_h), offset_w:(width+offset_w)]
         return ChessboardFrame(frame)
 
-    def current_edged_board_frame(self):
-        frame = cv2.imread(IMAGE_PATH)
-
-        M = self.get_chessboard_perspective_transform()
-        frame = cv2.warpPerspective(frame, M, (BOARD_SIZE,BOARD_SIZE))
-
-        #RESCALE
-        ratio = 1.015
-        height, width = frame.shape[:2]
-        image_center = (BOARD_SIZE / 2, BOARD_SIZE / 2)
-        img_scaled = cv2.resize(frame, (0,0), fx=ratio, fy=ratio)
-        offset_h = int(((height*ratio) - height)/2)
-        offset_w = int(((width*ratio) - width)/2)
-        frame = img_scaled[offset_h:(height+offset_h), offset_w:(width+offset_w)]
-        edged = self.canny(frame)
-
+    def current_board_edged(self):
+        frame = self.current_board_frame()
+        edged = self.canny(frame.img)
         return ChessboardFrame(edged)
+
+    def current_board_processed(self):
+        current = self.current_board_frame()
+        edged = self.current_board_edged()
+
+        if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
+
+        board = []
+        for i in range(8):
+            line = []
+            for j in range(8):
+                edged_square = edged.square_at(j,i)
+
+                if cv2.countNonZero(edged_square.img) > THRESHOLD_PRESENCE :
+                    current_square = current.square_at(j,i)
+
+                    masked = self.mask(current_square.img, edged_square.img)
+                    masked = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
+                    _, masked = cv2.threshold(masked, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
+
+                    if DEBUG : cv2.imwrite("output/squares/{}.jpg".format(current_square.position), masked)
+
+                    if cv2.countNonZero(masked) > THRESHOLD_COLOR :
+                        line.append("W")
+                    else:
+                        line.append("B")
+                else:
+                    line.append(".")
+            board.append(line)
+        return board
+
+    def canny(self, image):
+        img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        #img = self.adjust_gamma(img, CANNY_GAMMA)
+        img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+        cv2.imwrite("output/gray.jpg", img)
+
+        edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
+        edged = cv2.dilate(edged, None)
+        edged = cv2.erode(edged, None)
+        return edged
+
+    def mask(self, img, edges):
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(MASK_DILATE,MASK_DILATE))
+        edges = cv2.dilate(edges, kernel)
+        edges = cv2.erode(edges, None)
+
+        image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+        # Find largest contour
+        max_perimetre = 0.0
+        max_contour = None
+        for c in contours:
+            perimetre = cv2.arcLength(c, False)
+            if perimetre >= max_perimetre:
+                max_perimetre = perimetre
+                max_contour = c
+
+        #masked = cv2.drawContours(img, [max_contour], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
+        mask = np.zeros(edges.shape)
+        cv2.fillConvexPoly(mask, max_contour, (255))
+
+        #-- Smooth mask, then blur it --------------------------------------------------------
+        mask = cv2.dilate(mask, None, iterations=MASK_DILATE_ITER)
+        mask = cv2.erode(mask, None, iterations=MASK_ERODE_ITER)
+        mask = cv2.GaussianBlur(mask, (MASK_BLUR, MASK_BLUR), 0)
+        mask_stack = np.dstack([mask]*3)  # Create 3-channel alpha mask
+
+        #-- Blend masked img into MASK_COLOR background --------------------------------------
+        mask_stack  = mask_stack.astype('float32') / 255.0          # Use float matrices,
+        img         = img.astype('float32') / 255.0                 #  for easy blending
+
+        masked = (mask_stack * img) + ((1-mask_stack) * MASK_COLOR) # Blend
+        masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
+
+        return masked
 
     def adjust_gamma(self, image, gamma=1.0):
     	invGamma = 1.0 / gamma
     	table = np.array([((i / 255.0) ** invGamma) * 255
     		for i in np.arange(0, 256)]).astype("uint8")
-
     	return cv2.LUT(image, table)
-
-    def canny(self, image):
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        #img = self.adjust_gamma(img, 1.5)
-
-        # EDGE DETECTION
-        sigma=0.33
-        v = np.median(img)
-        lower = int(max(0, (1.0 - sigma) * v))
-        upper = int(min(255, (1.0 + sigma) * v))
-
-        #kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
-        #img = cv2.filter2D(img, -1, kernel)
-
-        #clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
-        #img = clahe.apply(img)
-        img = cv2.GaussianBlur(img, (5,5), 0)
-
-        cv2.imwrite("output/gray.jpg", img)
-
-        edged = cv2.Canny(img, 30, 50)
-        edged = cv2.dilate(edged, None)
-        edged = cv2.erode(edged, None)
-        return edged
-
-def printBoard(board):
-    for l in board:
-        print(l)
-
-def mask(img, edges):
-    BLUR = 21
-    MASK_DILATE_ITER = 2
-    MASK_ERODE_ITER = 8
-    MASK_COLOR = (0,0,0)
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(13,13))
-    edges = cv2.dilate(edges, kernel)
-    edges = cv2.erode(edges, None)
-
-    image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-
-    # Find largest contour
-    max_perimetre = 0.0
-    max_contour = None
-    for c in contours:
-        perimetre = cv2.arcLength(c, False)
-        if perimetre >= max_perimetre:
-            max_perimetre = perimetre
-            max_contour = c
-
-    #masked = cv2.drawContours(img, [max_contour], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
-
-    mask = np.zeros(edges.shape)
-    cv2.fillConvexPoly(mask, max_contour, (255))
-
-    #-- Smooth mask, then blur it --------------------------------------------------------
-    mask = cv2.dilate(mask, None, iterations=MASK_DILATE_ITER)
-    mask = cv2.erode(mask, None, iterations=MASK_ERODE_ITER)
-    mask = cv2.GaussianBlur(mask, (BLUR, BLUR), 0)
-    mask_stack = np.dstack([mask]*3)    # Create 3-channel alpha mask
-
-    #-- Blend masked img into MASK_COLOR background --------------------------------------
-    mask_stack  = mask_stack.astype('float32') / 255.0          # Use float matrices,
-    img         = img.astype('float32') / 255.0                 #  for easy blending
-
-    #img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    masked = (mask_stack * img) + ((1-mask_stack) * MASK_COLOR) # Blend
-    masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
-    #masked = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
-
-    return masked
-
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        ChessCamera = ChessCamera()
-
-        if "-c" in sys.argv:
-            IMAGE_PATH = sys.argv[1]
-            ChessCamera.calibration(IMAGE_PATH)
-            current = ChessCamera.current_board_frame()
-            cv2.imwrite("calibration.jpg", current.img)
-        else:
-            IMAGE_PATH = sys.argv[1]
-
-            current = ChessCamera.current_board_frame()
-            edged = ChessCamera.current_edged_board_frame()
-            cv2.imwrite("output/edged.jpg", edged.img)
-
-            # CUTTING SQUARES
-            board = []
-            threshold_piece = 50
-            threshold_color = 300
-            for i in range(8):
-                line = []
-                for j in range(8):
-                    edged_square = edged.square_at(j,i)
-
-                    if cv2.countNonZero(edged_square.img) > threshold_piece :
-
-                        current_square = current.square_at(j,i)
-                        masked = mask(current_square.img, edged_square.img)
-
-                        masked = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
-                        _, masked = cv2.threshold(masked,90,255,cv2.THRESH_BINARY)
-
-                        cv2.imwrite("output/squares/{}.jpg".format(current_square.position), masked)
-                        if cv2.countNonZero(masked) > threshold_color :
-                            line.append("W")
-                        else:
-                            line.append("B")
-                    else:
-                        line.append(".")
-                board.append(line)
-
-            printBoard(board)
-
-    else:
-        print("Usage: ChessCamera <image> -c")
