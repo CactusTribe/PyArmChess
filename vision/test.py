@@ -1,4 +1,4 @@
-import sys
+import sys,time
 from ChessCamera import ChessCamera
 from constants import *
 
@@ -18,7 +18,9 @@ if __name__ == '__main__':
         if "-c" in sys.argv:
             ChessCamera.calibration()
         else:
-            current_board = ChessCamera.current_board_processed()
-            printBoard(current_board)
+            while True:
+                current_board = ChessCamera.current_board_processed()
+                printBoard(current_board)
+                time.sleep(1)
     else:
         print("Usage: test <image> (options: -c calibration)")

@@ -1,5 +1,5 @@
 import numpy as np
-import sys
+import sys, time
 import cv2
 from ChessboardFrame import ChessboardFrame
 from itertools import product
@@ -17,6 +17,7 @@ class ChessCamera(object):
         if RUN_ON_PI:
             self.camera = PiCamera()
             self.camera.resolution = (640,480)
+            time.sleep(0.5)
 
         self.IMAGE_PATH = image
 
@@ -153,8 +154,11 @@ class ChessCamera(object):
 
     def canny(self, img):
         #img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+
+        clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
+        img = clahe.apply(img)
+
         img = self.adjust_gamma(img, CANNY_GAMMA)
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
