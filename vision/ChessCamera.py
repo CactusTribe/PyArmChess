@@ -92,7 +92,7 @@ class ChessCamera(object):
         np.save(self._chessboard_perspective_transform_path(), M)
 
         if DEBUG:
-            calib = ChessCamera.current_board_frame()
+            calib = self.current_board_frame()
             cv2.imwrite("calibration.jpg", calib.img)
 
     def current_board_frame(self):
@@ -153,8 +153,9 @@ class ChessCamera(object):
 
     def canny(self, img):
         #img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        img = self.adjust_gamma(img, CANNY_GAMMA)
+
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+        img = self.adjust_gamma(img, CANNY_GAMMA)
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
         edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)

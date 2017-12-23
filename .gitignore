@@ -1,4 +1,5 @@
 vision/output/squares/*.jpg
+vision/output/*.jpg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
