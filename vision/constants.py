@@ -1,4 +1,4 @@
-DEBUG = True
+DEBUG = False
 RUN_ON_PI = False
 
 # BOARD CONSTANTS

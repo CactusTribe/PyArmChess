@@ -22,9 +22,13 @@ class ChessCamera(object):
 
 
     def get_frame(self):
-        rawCapture = PiRGBArray(self.camera)
-        self.camera.capture(rawCapture, format="bgr")
-        return rawCapture.array
+        #rawCapture = PiRGBArray(self.camera)
+        #self.camera.capture(rawCapture, format="bgr")
+        stream = io.BytesIO()
+        camera.capture(stream, format='jpeg')
+        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
+        image = cv2.imdecode(data, 1)
+        return image
 
     def _chessboard_perspective_transform_path(self):
         return ('chessboard_perspective_transform.npy')
