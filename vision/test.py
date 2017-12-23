@@ -1,5 +1,6 @@
 import sys
 from ChessCamera import ChessCamera
+from constants import *
 
 def printBoard(board):
     for i, l in enumerate(board):

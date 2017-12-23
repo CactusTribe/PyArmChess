@@ -16,7 +16,7 @@ class ChessCamera(object):
     def __init__(self, image):
         if RUN_ON_PI:
             self.camera = PiCamera()
-            self.camera.resolution = (640.480)
+            self.camera.resolution = (640,480)
 
         self.IMAGE_PATH = image
 
@@ -149,7 +149,7 @@ class ChessCamera(object):
 
     def canny(self, image):
         img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        #img = self.adjust_gamma(img, CANNY_GAMMA)
+        img = self.adjust_gamma(img, CANNY_GAMMA)
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
