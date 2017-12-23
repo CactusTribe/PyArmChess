@@ -22,13 +22,9 @@ class ChessCamera(object):
 
 
     def get_frame(self):
-        #rawCapture = PiRGBArray(self.camera)
-        #self.camera.capture(rawCapture, format="bgr")
-        stream = io.BytesIO()
-        camera.capture(stream, format='jpeg')
-        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-        image = cv2.imdecode(data, 1)
-        return image
+        rawCapture = PiRGBArray(self.camera)
+        self.camera.capture(rawCapture, format="bgr")
+        return rawCapture.array
 
     def _chessboard_perspective_transform_path(self):
         return ('chessboard_perspective_transform.npy')
@@ -45,6 +41,8 @@ class ChessCamera(object):
             frame = self.get_frame()
         else:
             frame = cv2.imread(self.IMAGE_PATH)
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         board_size = (7,7)
         found, corners = cv2.findChessboardCorners(frame, board_size, flags=cv2.CALIB_CB_NORMALIZE_IMAGE|cv2.CALIB_CB_ADAPTIVE_THRESH)
@@ -103,6 +101,8 @@ class ChessCamera(object):
         else:
             frame = cv2.imread(self.IMAGE_PATH)
 
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
         M = self.get_chessboard_perspective_transform()
         frame = cv2.warpPerspective(frame, M, (BOARD_SIZE,BOARD_SIZE))
 
@@ -151,8 +151,8 @@ class ChessCamera(object):
             board.append(line)
         return board
 
-    def canny(self, image):
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    def canny(self, img):
+        #img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         img = self.adjust_gamma(img, CANNY_GAMMA)
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
@@ -192,6 +192,7 @@ class ChessCamera(object):
         mask_stack  = mask_stack.astype('float32') / 255.0          # Use float matrices,
         img         = img.astype('float32') / 255.0                 #  for easy blending
 
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         masked = (mask_stack * img) + ((1-mask_stack) * MASK_COLOR) # Blend
         masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
 
