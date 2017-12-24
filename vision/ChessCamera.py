@@ -123,7 +123,6 @@ class ChessCamera(object):
         return ChessboardFrame(edged)
 
     def current_board_processed(self):
-        current = self.current_board_frame()
         edged = self.current_board_edged()
 
         if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
@@ -135,10 +134,21 @@ class ChessCamera(object):
                 edged_square = edged.square_at(j,i)
 
                 if cv2.countNonZero(edged_square.img) > THRESHOLD_PRESENCE :
+                    current = self.current_board_frame()
+                    clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
+                    current.img = clahe.apply(current.img)
+
                     current_square = current.square_at(j,i)
 
                     masked, masked_draw = self.mask(current_square.img, edged_square.img)
+
                     thres = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
+
+                    #masked_draw = self.adjust_gamma(masked, 1)
+                    #masked_draw = self.adjust_gamma(masked_draw, 2)
+
+                    #thres = self.adjust_gamma(thres, 0.5)
+                    #thres = cv2.GaussianBlur(thres, (5,5), 0)
                     _, thres = cv2.threshold(thres, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
 
                     if DEBUG and MASK_DRAW:
@@ -159,22 +169,18 @@ class ChessCamera(object):
         #img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         img = self.adjust_gamma(img, CANNY_GAMMA)
 
-        #img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
-
-        clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
-        img = clahe.apply(img)
+        #clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
+        #img = clahe.apply(img)
+        #kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
+        #img = cv2.filter2D(img, -1, kernel)
+        #img = cv2.GaussianBlur(img, (5,5), 0)
 
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
-
-        kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
-        img = cv2.filter2D(img, -1, kernel)
-
-        img = cv2.GaussianBlur(img, (5,5), 0)
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
         edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
-        #edged = cv2.dilate(edged, None)
+        edged = cv2.dilate(edged, None)
         #edged = cv2.erode(edged, None)
         return edged
 
