@@ -1,5 +1,5 @@
 DEBUG = True
-RUN_ON_PI = True
+RUN_ON_PI = False
 
 # BOARD CONSTANTS
 SQUARE_SIZE = 60
