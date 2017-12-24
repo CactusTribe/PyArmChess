@@ -18,9 +18,13 @@ if __name__ == '__main__':
         if "-c" in sys.argv:
             ChessCamera.calibration()
         else:
-            while True:
+            if not DEBUG:
+                while True:
+                    current_board = ChessCamera.current_board_processed()
+                    printBoard(current_board)
+                    time.sleep(1)
+            else:
                 current_board = ChessCamera.current_board_processed()
                 printBoard(current_board)
-                time.sleep(1)
     else:
         print("Usage: test <image> (options: -c calibration)")

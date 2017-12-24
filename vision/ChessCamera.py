@@ -137,13 +137,16 @@ class ChessCamera(object):
                 if cv2.countNonZero(edged_square.img) > THRESHOLD_PRESENCE :
                     current_square = current.square_at(j,i)
 
-                    masked = self.mask(current_square.img, edged_square.img)
-                    masked = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
-                    _, masked = cv2.threshold(masked, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
+                    masked, masked_draw = self.mask(current_square.img, edged_square.img)
+                    thres = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
+                    _, thres = cv2.threshold(thres, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
 
-                    if DEBUG : cv2.imwrite("output/squares/{}.jpg".format(current_square.position), masked)
+                    if DEBUG and MASK_DRAW:
+                        cv2.imwrite("output/squares/{}.jpg".format(current_square.position), masked_draw)
+                    if DEBUG and not MASK_DRAW:
+                        cv2.imwrite("output/squares/{}.jpg".format(current_square.position), thres)
 
-                    if cv2.countNonZero(masked) > THRESHOLD_COLOR :
+                    if cv2.countNonZero(thres) > THRESHOLD_COLOR :
                         line.append("W")
                     else:
                         line.append("B")
@@ -154,23 +157,32 @@ class ChessCamera(object):
 
     def canny(self, img):
         #img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+        img = self.adjust_gamma(img, CANNY_GAMMA)
+
+        #img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
 
         clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
         img = clahe.apply(img)
 
-        img = self.adjust_gamma(img, CANNY_GAMMA)
+        img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+
+        kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
+        img = cv2.filter2D(img, -1, kernel)
+
+        img = cv2.GaussianBlur(img, (5,5), 0)
+
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
         edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
-        edged = cv2.dilate(edged, None)
-        edged = cv2.erode(edged, None)
+        #edged = cv2.dilate(edged, None)
+        #edged = cv2.erode(edged, None)
         return edged
 
     def mask(self, img, edges):
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(MASK_DILATE,MASK_DILATE))
-        edges = cv2.dilate(edges, kernel)
-        edges = cv2.erode(edges, None)
+        kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_DILATE,EDGE_DILATE))
+        kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_ERODE,EDGE_ERODE))
+        edges = cv2.dilate(edges, kernel_dilate)
+        edges = cv2.erode(edges, kernel_erode)
 
         image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
@@ -183,7 +195,8 @@ class ChessCamera(object):
                 max_perimetre = perimetre
                 max_contour = c
 
-        #masked = cv2.drawContours(img, [max_contour], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
         mask = np.zeros(edges.shape)
         cv2.fillConvexPoly(mask, max_contour, (255))
 
@@ -197,11 +210,14 @@ class ChessCamera(object):
         mask_stack  = mask_stack.astype('float32') / 255.0          # Use float matrices,
         img         = img.astype('float32') / 255.0                 #  for easy blending
 
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         masked = (mask_stack * img) + ((1-mask_stack) * MASK_COLOR) # Blend
         masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
 
-        return masked
+        if MASK_DRAW:
+            masked_draw = cv2.drawContours(masked.copy(), [max_contour], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
+        else: masked_draw = None
+
+        return masked, masked_draw
 
     def adjust_gamma(self, image, gamma=1.0):
     	invGamma = 1.0 / gamma
