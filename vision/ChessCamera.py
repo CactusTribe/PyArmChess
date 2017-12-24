@@ -124,6 +124,9 @@ class ChessCamera(object):
 
     def current_board_processed(self):
         edged = self.current_board_edged()
+        current = self.current_board_frame()
+        clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
+        current.img = clahe.apply(current.img)
 
         if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
 
@@ -134,14 +137,9 @@ class ChessCamera(object):
                 edged_square = edged.square_at(j,i)
 
                 if cv2.countNonZero(edged_square.img) > THRESHOLD_PRESENCE :
-                    current = self.current_board_frame()
-                    clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
-                    current.img = clahe.apply(current.img)
-
                     current_square = current.square_at(j,i)
 
                     masked, masked_draw = self.mask(current_square.img, edged_square.img)
-
                     thres = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
                     #masked_draw = self.adjust_gamma(masked, 1)
