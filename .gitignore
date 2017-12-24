@@ -1,6 +1,8 @@
+vision/*.jpg
 vision/output/squares/*.jpg
 vision/output/*.jpg
 *.npy
+vision/*.npy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
