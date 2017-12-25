@@ -169,8 +169,8 @@ class ChessCamera(object):
 
         #clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
         #img = clahe.apply(img)
-        kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
-        img = cv2.filter2D(img, -1, kernel)
+        #kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
+        #img = cv2.filter2D(img, -1, kernel)
         #img = cv2.GaussianBlur(img, (5,5), 0)
 
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
