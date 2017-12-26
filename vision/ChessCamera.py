@@ -136,7 +136,7 @@ class ChessCamera(object):
         current.img = cv2.bilateralFilter(current.img, CANNY_BLUR, 17, 17)
         clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(10,10))
         #current.img = clahe.apply(current.img)
-        current.img = cv2.equalizeHist(current.img)
+        #current.img = cv2.equalizeHist(current.img)
 
         if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
 
@@ -190,8 +190,8 @@ class ChessCamera(object):
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
-        #edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
-        edged = self.auto_canny(img, CANNY_SIGMA)
+        edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
+        #edged = self.auto_canny(img, CANNY_SIGMA)
 
         kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_DILATE,EDGE_DILATE))
         kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_ERODE,EDGE_ERODE))
