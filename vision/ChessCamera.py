@@ -133,10 +133,10 @@ class ChessCamera(object):
         current = self.current_board_frame()
 
         current.img = cv2.cvtColor(current.img, cv2.COLOR_BGR2GRAY)
-        #current.img = cv2.bilateralFilter(current.img, CANNY_BLUR, 17, 17)
-        clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+        current.img = cv2.bilateralFilter(current.img, CANNY_BLUR, 17, 17)
+        clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(10,10))
         #current.img = clahe.apply(current.img)
-        #current.img = cv2.equalizeHist(current.img)
+        current.img = cv2.equalizeHist(current.img)
 
         if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
 
@@ -180,7 +180,7 @@ class ChessCamera(object):
         kernel_sharpen = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
         clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
 
-        #img = clahe.apply(img)
+        img = clahe.apply(img)
 
         #img = cv2.normalize(img, img, alpha=10, beta=150, norm_type=cv2.NORM_MINMAX)
         img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
@@ -190,15 +190,15 @@ class ChessCamera(object):
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
-        edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
-        #edged = self.auto_canny(img, CANNY_SIGMA)
+        #edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
+        edged = self.auto_canny(img, CANNY_SIGMA)
 
         kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_DILATE,EDGE_DILATE))
         kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_ERODE,EDGE_ERODE))
-        edged = cv2.dilate(edged, kernel_dilate)
-        edged = cv2.erode(edged, kernel_erode)
-        #edged = cv2.dilate(edged, None)
-        #edged = cv2.erode(edged, None)
+        #edged = cv2.dilate(edged, kernel_dilate)
+        #edged = cv2.erode(edged, kernel_erode)
+        edged = cv2.dilate(edged, None)
+        edged = cv2.erode(edged, None)
         return edged
 
     def mask(self, img, edges):
@@ -216,7 +216,8 @@ class ChessCamera(object):
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
         mask = np.zeros(edges.shape)
-        cv2.fillConvexPoly(mask, max_contour, (255))
+        hull = cv2.convexHull(max_contour)
+        cv2.fillConvexPoly(mask, hull, (255))
 
         #-- Smooth mask, then blur it --------------------------------------------------------
         mask = cv2.dilate(mask, None, iterations=MASK_DILATE_ITER)
@@ -232,7 +233,7 @@ class ChessCamera(object):
         masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
 
         if MASK_DRAW:
-            masked_draw = cv2.drawContours(masked.copy(), [max_contour], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
+            masked_draw = cv2.drawContours(masked.copy(), [hull], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
         else: masked_draw = None
 
         return masked, masked_draw
