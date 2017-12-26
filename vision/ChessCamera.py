@@ -72,19 +72,19 @@ class ChessCamera(object):
 
         x, y = predict(4.0, 4.0)
         P.append((x[0], y[0]))
-        Q.append((0.0, 0.0))
+        Q.append((480.0, 0.0))
 
         x, y = predict(-4.0, 4.0)
         P.append((x[0], y[0]))
-        Q.append((0.0, 480.0))
+        Q.append((0.0, 0.0))
 
         x, y = predict(4.0, -4.0)
         P.append((x[0], y[0]))
-        Q.append((480.0, 0.0))
+        Q.append((480.0, 480.0))
 
         x, y = predict(-4.0, -4.0)
         P.append((x[0], y[0]))
-        Q.append((480.0, 480.0))
+        Q.append((0.0, 480.0))
 
         Q = np.array(Q, np.float32)
         P = np.array(P, np.float32).reshape(Q.shape)
@@ -102,7 +102,7 @@ class ChessCamera(object):
         else:
             frame = cv2.imread(self.IMAGE_PATH)
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         M = self.get_chessboard_perspective_transform()
         frame = cv2.warpPerspective(frame, M, (BOARD_SIZE,BOARD_SIZE))
@@ -125,8 +125,12 @@ class ChessCamera(object):
     def current_board_processed(self):
         edged = self.current_board_edged()
         current = self.current_board_frame()
-        clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
-        current.img = clahe.apply(current.img)
+
+        current.img = cv2.cvtColor(current.img, cv2.COLOR_BGR2GRAY)
+        #current.img = cv2.bilateralFilter(current.img, CANNY_BLUR, 17, 17)
+        clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+        #current.img = clahe.apply(current.img)
+        #current.img = cv2.equalizeHist(current.img)
 
         if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
 
@@ -146,7 +150,7 @@ class ChessCamera(object):
                     #masked_draw = self.adjust_gamma(masked_draw, 2)
 
                     #thres = self.adjust_gamma(thres, 0.5)
-                    #thres = cv2.GaussianBlur(thres, (5,5), 0)
+                    thres = cv2.GaussianBlur(thres, (13,13), 0)
                     _, thres = cv2.threshold(thres, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
 
                     if DEBUG and MASK_DRAW:
@@ -164,31 +168,34 @@ class ChessCamera(object):
         return board
 
     def canny(self, img):
-        #img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img = self.adjust_gamma(img, CANNY_GAMMA)
 
-        #clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
-        #img = clahe.apply(img)
-        #kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
-        #img = cv2.filter2D(img, -1, kernel)
-        #img = cv2.GaussianBlur(img, (5,5), 0)
+        kernel_sharpen = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
+        clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
 
-        img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+        img = clahe.apply(img)
+
+        #img = cv2.normalize(img, img, alpha=10, beta=150, norm_type=cv2.NORM_MINMAX)
+        img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
+        img = cv2.filter2D(img, -1, kernel_sharpen)
+        #img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
         edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
-        edged = cv2.dilate(edged, None)
+        #edged = self.auto_canny(img, CANNY_SIGMA)
+
+        kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_DILATE,EDGE_DILATE))
+        kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_ERODE,EDGE_ERODE))
+        edged = cv2.dilate(edged, kernel_dilate)
+        edged = cv2.erode(edged, kernel_erode)
+        #edged = cv2.dilate(edged, None)
         #edged = cv2.erode(edged, None)
         return edged
 
     def mask(self, img, edges):
-        kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_DILATE,EDGE_DILATE))
-        kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_ERODE,EDGE_ERODE))
-        edges = cv2.dilate(edges, kernel_dilate)
-        edges = cv2.erode(edges, kernel_erode)
-
-        image, contours, hierarchy = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        image, contours, hierarchy = cv2.findContours(edges.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
         # Find largest contour
         max_perimetre = 0.0
@@ -228,3 +235,15 @@ class ChessCamera(object):
     	table = np.array([((i / 255.0) ** invGamma) * 255
     		for i in np.arange(0, 256)]).astype("uint8")
     	return cv2.LUT(image, table)
+
+    def auto_canny(self,image, sigma=0.33):
+    	# compute the median of the single channel pixel intensities
+    	v = np.median(image)
+
+    	# apply automatic Canny edge detection using the computed median
+    	lower = int(max(0, (1.0 - sigma) * v))
+    	upper = int(min(255, (1.0 + sigma) * v))
+    	edged = cv2.Canny(image, lower, upper)
+
+    	# return the edged image
+    	return edged
