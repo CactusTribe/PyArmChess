@@ -17,7 +17,13 @@ class ChessCamera(object):
         if RUN_ON_PI:
             self.camera = PiCamera()
             self.camera.resolution = (640,480)
-            time.sleep(0.5)
+            self.camera.iso = CAMERA_ISO
+            self.camera.exposure_compensation = CAMERA_COMP
+            time.sleep(1)
+            g = self.camera.awb_gains
+            self.camera.awb_mode = 'off'
+            self.camera.awb_gains = g
+            self.camera.exposure_mode = 'off'
 
         self.IMAGE_PATH = image
 
@@ -174,11 +180,12 @@ class ChessCamera(object):
         kernel_sharpen = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
         clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
 
-        img = clahe.apply(img)
+        #img = clahe.apply(img)
 
         #img = cv2.normalize(img, img, alpha=10, beta=150, norm_type=cv2.NORM_MINMAX)
         img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
-        img = cv2.filter2D(img, -1, kernel_sharpen)
+        #img = clahe.apply(img)
+        #img = cv2.filter2D(img, -1, kernel_sharpen)
         #img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
