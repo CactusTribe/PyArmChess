@@ -78,19 +78,19 @@ class ChessCamera(object):
 
         x, y = predict(4.0, 4.0)
         P.append((x[0], y[0]))
-        Q.append((480.0, 0.0))
+        Q.append((0.0, 0.0))
 
         x, y = predict(-4.0, 4.0)
         P.append((x[0], y[0]))
-        Q.append((0.0, 0.0))
+        Q.append((0.0, 480.0))
 
         x, y = predict(4.0, -4.0)
         P.append((x[0], y[0]))
-        Q.append((480.0, 480.0))
+        Q.append((480.0, 0.0))
 
         x, y = predict(-4.0, -4.0)
         P.append((x[0], y[0]))
-        Q.append((0.0, 480.0))
+        Q.append((480.0, 480.0))
 
         Q = np.array(Q, np.float32)
         P = np.array(P, np.float32).reshape(Q.shape)
@@ -182,7 +182,7 @@ class ChessCamera(object):
 
         img = clahe.apply(img)
 
-        #img = cv2.normalize(img, img, alpha=10, beta=150, norm_type=cv2.NORM_MINMAX)
+        #img = cv2.normalize(img, img, alpha=50, beta=200, norm_type=cv2.NORM_MINMAX)
         img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
         #img = clahe.apply(img)
         #img = cv2.filter2D(img, -1, kernel_sharpen)
@@ -190,8 +190,8 @@ class ChessCamera(object):
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
-        #edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
-        edged = self.auto_canny(img, CANNY_SIGMA)
+        edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
+        #edged = self.auto_canny(img, CANNY_SIGMA)
 
         kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_DILATE,EDGE_DILATE))
         kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_ERODE,EDGE_ERODE))
