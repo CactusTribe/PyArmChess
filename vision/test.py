@@ -25,6 +25,7 @@ if __name__ == '__main__':
                     time.sleep(1)
             else:
                 current_board = ChessCamera.current_board_processed()
+                ChessCamera.camera.close()
                 printBoard(current_board)
     else:
         print("Usage: test <image> (options: -c calibration)")
