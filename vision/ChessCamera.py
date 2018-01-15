@@ -136,7 +136,7 @@ class ChessCamera(object):
         current.img = cv2.bilateralFilter(current.img, CANNY_BLUR, 17, 17)
         clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(10,10))
         #current.img = clahe.apply(current.img)
-        current.img = cv2.equalizeHist(current.img)
+        #current.img = cv2.equalizeHist(current.img)
 
         if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
 
