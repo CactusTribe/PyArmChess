@@ -8,6 +8,7 @@ def printBoard(board):
 
     print("  ",''.join("-"*16))
     print("   ",' '.join("ABCDEFGH"))
+    print("")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -19,10 +20,21 @@ if __name__ == '__main__':
             ChessCamera.calibration()
         else:
             if not DEBUG:
+                valid_board = None
+                old_boards = [None, None, None]
+
                 while True:
                     current_board = ChessCamera.current_board_processed()
-                    printBoard(current_board)
-                    time.sleep(0.1)
+                    old_boards.pop(0)
+                    old_boards.append(current_board)
+
+                    if AVERAGE_BOARD:
+                        if old_boards[0] == old_boards[1] and old_boards[1] == old_boards[2]:
+                            valid_board = current_board
+                            printBoard(valid_board)
+                    else:
+                        printBoard(current_board)
+
             else:
                 current_board = ChessCamera.current_board_processed()
                 printBoard(current_board)

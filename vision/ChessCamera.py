@@ -17,7 +17,6 @@ class ChessCamera(object):
         if RUN_ON_PI:
             self.camera = PiCamera()
             self.camera.resolution = (640,480)
-            #self.camera.exposure_mode = 'auto'
             self.camera.iso = CAMERA_ISO
             self.camera.exposure_compensation = CAMERA_COMP
             self.camera.brightness = CAMERA_BRIGHTNESS
@@ -110,8 +109,6 @@ class ChessCamera(object):
         else:
             frame = cv2.imread(self.IMAGE_PATH)
 
-        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
         M = self.get_chessboard_perspective_transform()
         frame = cv2.warpPerspective(frame, M, (BOARD_SIZE,BOARD_SIZE))
 
@@ -135,10 +132,8 @@ class ChessCamera(object):
         current = self.current_board_frame()
 
         current.img = cv2.cvtColor(current.img, cv2.COLOR_BGR2GRAY)
-        current.img = cv2.bilateralFilter(current.img, CANNY_BLUR, 17, 17)
-        clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(10,10))
-        #current.img = clahe.apply(current.img)
-        #current.img = cv2.equalizeHist(current.img)
+        current.img = cv2.bilateralFilter(current.img, 13, 17, 17)
+        current.img = cv2.equalizeHist(current.img)
 
         if DEBUG : cv2.imwrite("output/edged.jpg", edged.img)
 
@@ -155,11 +150,6 @@ class ChessCamera(object):
                     thres = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
                     height, width = thres.shape
 
-                    #masked_draw = self.adjust_gamma(masked, 1)
-                    #masked_draw = self.adjust_gamma(masked_draw, 2)
-
-                    #thres = self.adjust_gamma(thres, 1.5)
-                    thres = cv2.GaussianBlur(thres, (13,13), 0)
                     _, thres = cv2.threshold(thres, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
 
                     if DEBUG and MASK_DRAW:
@@ -181,37 +171,24 @@ class ChessCamera(object):
 
     def canny(self, img):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img = self.adjust_gamma(img, CANNY_GAMMA)
 
-        kernel_sharpen = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
-        clahe = cv2.createCLAHE(clipLimit=CLAHE_LIMIT, tileGridSize=(CLAHE_GRID,CLAHE_GRID))
-
-        #img = clahe.apply(img)
-
-        #img = cv2.normalize(img, img, alpha=50, beta=200, norm_type=cv2.NORM_MINMAX)
         img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
         #img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
-        #img = clahe.apply(img)
+
+        kernel_sharpen = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
         img = cv2.filter2D(img, -1, kernel_sharpen)
-        #img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
-        #img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
         edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
         #edged = self.auto_canny(img, CANNY_SIGMA)
 
-        kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_DILATE,EDGE_DILATE))
-        kernel_erode = cv2.getStructuringElement(cv2.MORPH_RECT,(EDGE_ERODE,EDGE_ERODE))
-        #edged = cv2.dilate(edged, kernel_dilate)
-        #edged = cv2.erode(edged, kernel_erode)
         edged = cv2.dilate(edged, None)
         edged = cv2.erode(edged, None)
         return edged
 
     def mask(self, img, edges):
         image, contours, hierarchy = cv2.findContours(edges.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-
         # Find largest contour
         max_perimetre = 0.0
         max_contour = None
@@ -242,22 +219,8 @@ class ChessCamera(object):
         # combine masked foreground and masked background
         masked = cv2.bitwise_or(fg_masked, bk_masked)
 
-        #-- Smooth mask, then blur it --------------------------------------------------------
-        #mask = cv2.dilate(mask, None, iterations=MASK_DILATE_ITER)
-        #mask = cv2.erode(mask, None, iterations=MASK_ERODE_ITER)
-        #mask = cv2.GaussianBlur(mask, (MASK_BLUR, MASK_BLUR), 0)
-        #mask_stack = np.dstack([mask]*3)  # Create 3-channel alpha mask
-
-        #-- Blend masked img into MASK_COLOR background --------------------------------------
-        #mask_stack  = mask_stack.astype('float32') / 255.0          # Use float matrices,
-        #img         = img_bgr.copy().astype('float32') / 255.0                 #  for easy blending
-
-        #masked = (mask_stack * img) + ((1-mask_stack) * MASK_COLOR) # Blend
-        #masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
-
         masked = cv2.cvtColor(masked, cv2.COLOR_GRAY2BGR)
         if MASK_DRAW:
-
             masked_draw = cv2.drawContours(masked.copy(), [hull], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
 
         else: masked_draw = None
