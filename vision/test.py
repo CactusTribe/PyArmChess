@@ -22,10 +22,11 @@ if __name__ == '__main__':
                 while True:
                     current_board = ChessCamera.current_board_processed()
                     printBoard(current_board)
-                    time.sleep(1)
+                    time.sleep(0.1)
             else:
                 current_board = ChessCamera.current_board_processed()
-                ChessCamera.camera.close()
                 printBoard(current_board)
+
+        #ChessCamera.camera.close()
     else:
         print("Usage: test <image> (options: -c calibration)")

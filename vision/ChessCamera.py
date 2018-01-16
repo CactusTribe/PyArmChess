@@ -17,14 +17,15 @@ class ChessCamera(object):
         if RUN_ON_PI:
             self.camera = PiCamera()
             self.camera.resolution = (640,480)
+            #self.camera.exposure_mode = 'auto'
             self.camera.iso = CAMERA_ISO
+            self.camera.exposure_compensation = CAMERA_COMP
             self.camera.brightness = CAMERA_BRIGHTNESS
-            #self.camera.exposure_compensation = CAMERA_COMP
-            time.sleep(2)
-            self.camera.exposure_mode = 'off'
+            time.sleep(1)
             g = self.camera.awb_gains
             self.camera.awb_mode = 'off'
             self.camera.awb_gains = g
+            self.camera.exposure_mode = 'off'
 
         self.IMAGE_PATH = image
 
@@ -152,12 +153,13 @@ class ChessCamera(object):
 
                     masked, masked_draw = self.mask(current_square.img, edged_square.img)
                     thres = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
+                    height, width = thres.shape
 
                     #masked_draw = self.adjust_gamma(masked, 1)
                     #masked_draw = self.adjust_gamma(masked_draw, 2)
 
-                    #thres = self.adjust_gamma(thres, 0.5)
-                    thres = cv2.GaussianBlur(thres, (17,17), 0)
+                    #thres = self.adjust_gamma(thres, 1.5)
+                    thres = cv2.GaussianBlur(thres, (13,13), 0)
                     _, thres = cv2.threshold(thres, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
 
                     if DEBUG and MASK_DRAW:
@@ -165,10 +167,13 @@ class ChessCamera(object):
                     if DEBUG and not MASK_DRAW:
                         cv2.imwrite("output/squares/{}.jpg".format(current_square.position), thres)
 
-                    if cv2.countNonZero(thres) > THRESHOLD_COLOR :
-                        line.append("W")
-                    else:
+                    count_white = cv2.countNonZero(thres);
+                    count_black = height * width - count_white;
+
+                    if count_black > THRESHOLD_COLOR :
                         line.append("B")
+                    else:
+                        line.append("W")
                 else:
                     line.append(".")
             board.append(line)
@@ -184,11 +189,12 @@ class ChessCamera(object):
         #img = clahe.apply(img)
 
         #img = cv2.normalize(img, img, alpha=50, beta=200, norm_type=cv2.NORM_MINMAX)
-        img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
+        img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+        #img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
         #img = clahe.apply(img)
         img = cv2.filter2D(img, -1, kernel_sharpen)
         #img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
-        #img = cv2.bilateralFilter(img, CANNY_BLUR, 13, 13)
+        #img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
 
         if DEBUG : cv2.imwrite("output/gray.jpg", img)
 
@@ -215,27 +221,45 @@ class ChessCamera(object):
                 max_perimetre = perimetre
                 max_contour = c
 
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-        mask = np.zeros(edges.shape)
+        mask = np.zeros(edges.shape, dtype=np.uint8)
+        #mask = np.ones() * 255
         hull = cv2.convexHull(max_contour)
         cv2.fillConvexPoly(mask, hull, (255))
 
-        #-- Smooth mask, then blur it --------------------------------------------------------
+        img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        # load background (could be an image too)
+        bk = np.full(img.shape, 255, dtype=np.uint8)  # white bk
+        # get masked foreground
+        fg_masked = cv2.bitwise_and(img, img, mask=mask)
+        # get masked background, mask must be inverted
+        mask = cv2.bitwise_not(mask)
         mask = cv2.dilate(mask, None, iterations=MASK_DILATE_ITER)
         mask = cv2.erode(mask, None, iterations=MASK_ERODE_ITER)
         mask = cv2.GaussianBlur(mask, (MASK_BLUR, MASK_BLUR), 0)
-        mask_stack = np.dstack([mask]*3)  # Create 3-channel alpha mask
+        bk_masked = cv2.bitwise_and(bk, bk, mask=mask)
+        # combine masked foreground and masked background
+        masked = cv2.bitwise_or(fg_masked, bk_masked)
+
+        #-- Smooth mask, then blur it --------------------------------------------------------
+        #mask = cv2.dilate(mask, None, iterations=MASK_DILATE_ITER)
+        #mask = cv2.erode(mask, None, iterations=MASK_ERODE_ITER)
+        #mask = cv2.GaussianBlur(mask, (MASK_BLUR, MASK_BLUR), 0)
+        #mask_stack = np.dstack([mask]*3)  # Create 3-channel alpha mask
 
         #-- Blend masked img into MASK_COLOR background --------------------------------------
-        mask_stack  = mask_stack.astype('float32') / 255.0          # Use float matrices,
-        img         = img.astype('float32') / 255.0                 #  for easy blending
+        #mask_stack  = mask_stack.astype('float32') / 255.0          # Use float matrices,
+        #img         = img_bgr.copy().astype('float32') / 255.0                 #  for easy blending
 
-        masked = (mask_stack * img) + ((1-mask_stack) * MASK_COLOR) # Blend
-        masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
+        #masked = (mask_stack * img) + ((1-mask_stack) * MASK_COLOR) # Blend
+        #masked = (masked * 255).astype('uint8')                     # Convert back to 8-bit
 
+        masked = cv2.cvtColor(masked, cv2.COLOR_GRAY2BGR)
         if MASK_DRAW:
+
             masked_draw = cv2.drawContours(masked.copy(), [hull], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
+
         else: masked_draw = None
 
         return masked, masked_draw

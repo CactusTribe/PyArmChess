@@ -12,8 +12,13 @@ endif
 run:
 	python3 src/main.py
 
+test:
+	python3 vision/test.py vision/samples/${sample}
+
 send:
-	scp -P 2238 -r src/ $(PI)
+	@scp vision/ChessCamera.py joaquim@192.168.1.15:~/pyprojects/PyArmChess/vision/
+	@scp vision/constants.py joaquim@192.168.1.15:~/pyprojects/PyArmChess/vision/
+	@scp vision/test.py joaquim@192.168.1.15:~/pyprojects/PyArmChess/vision/
 
 info:
 	find src/ -name '[^]*.py' | xargs wc -l
