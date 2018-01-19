@@ -89,6 +89,7 @@ if __name__ == '__main__':
 
     while True:
         current_board = ChessCamera.current_board_processed()
+
         old_boards.pop(0)
         old_boards.append(current_board)
 
@@ -101,11 +102,9 @@ if __name__ == '__main__':
             last_valid_board = valid_board
             valid_board = current_board
 
-        if valid_board != last_valid_board:
+        if last_valid_board != None and valid_board != last_valid_board:
             ChessGame.detect_next_move( last_valid_board, valid_board )
             print(" #", ChessGame.next_move)
 
             ChessGame.apply_next_move()
             printBoard(ChessGame.board)
-
-        time.sleep(1)

@@ -148,16 +148,14 @@ class ChessCamera(object):
                     current_square = current.square_at(j,i)
 
                     masked, masked_draw = self.mask(current_square.img, edged_square.img)
-                    thres = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
-                    height, width = thres.shape
-
-                    _, thres = cv2.threshold(thres, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
+                    _, thres = cv2.threshold(masked, THRESHOLD_BINARY, 255, cv2.THRESH_BINARY)
 
                     if DEBUG and MASK_DRAW:
                         cv2.imwrite("output/squares/{}.jpg".format(current_square.position), masked_draw)
                     if DEBUG and not MASK_DRAW:
                         cv2.imwrite("output/squares/{}.jpg".format(current_square.position), thres)
 
+                    height, width = thres.shape
                     count_white = cv2.countNonZero(thres);
                     count_black = height * width - count_white;
 
@@ -183,7 +181,6 @@ class ChessCamera(object):
 
         edged = cv2.Canny(img, CANNY_LOWER, CANNY_UPPER)
         #edged = self.auto_canny(img, CANNY_SIGMA)
-
         edged = cv2.dilate(edged, None)
         edged = cv2.erode(edged, None)
         return edged
@@ -199,15 +196,12 @@ class ChessCamera(object):
                 max_perimetre = perimetre
                 max_contour = c
 
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        img_bgr = cv2.cvtColor(img.copy(), cv2.COLOR_GRAY2BGR)
 
         mask = np.zeros(edges.shape, dtype=np.uint8)
-        #mask = np.ones() * 255
         hull = cv2.convexHull(max_contour)
         cv2.fillConvexPoly(mask, hull, (255))
 
-        img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-        # load background (could be an image too)
         bk = np.full(img.shape, 255, dtype=np.uint8)  # white bk
         # get masked foreground
         fg_masked = cv2.bitwise_and(img, img, mask=mask)
@@ -220,7 +214,6 @@ class ChessCamera(object):
         # combine masked foreground and masked background
         masked = cv2.bitwise_or(fg_masked, bk_masked)
 
-        masked = cv2.cvtColor(masked, cv2.COLOR_GRAY2BGR)
         if MASK_DRAW:
             masked_draw = cv2.drawContours(masked.copy(), [hull], 0, (0,255,0), 2, cv2.LINE_AA, maxLevel=1)
 

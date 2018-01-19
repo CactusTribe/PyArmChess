@@ -16,26 +16,33 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
 
         IMAGE_PATH = sys.argv[1]
+
+        begin = time.time()
+        print("# Camera init ...")
         ChessCamera = ChessCamera(IMAGE_PATH)
+        print("> Done !", time.time() - begin, "sec")
 
         if "-c" in sys.argv:
             ChessCamera.calibration()
         else:
             if not DEBUG:
+                last_valid_board = None
                 valid_board = None
                 old_boards = [None, None, None]
 
                 while True:
                     current_board = ChessCamera.current_board_processed()
+
                     old_boards.pop(0)
                     old_boards.append(current_board)
 
                     if AVERAGE_BOARD:
-                        if old_boards[0] == old_boards[1] and old_boards[1] == old_boards[2]:
+                        if old_boards[2] == old_boards[1] and old_boards[1] == old_boards[0]:
+                            last_valid_board = valid_board
                             valid_board = current_board
-                            printBoard(valid_board)
-                    else:
-                        printBoard(current_board)
+
+                    if valid_board != last_valid_board:
+                        printBoard(valid_board)
 
             else:
                 current_board = ChessCamera.current_board_processed()
