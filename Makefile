@@ -26,4 +26,4 @@ send:
 	@scp Makefile joaquim@192.168.1.15:~/pyprojects/PyArmChess/
 
 info:
-	find src/ -name '[^]*.py' | xargs wc -l
+	find . -name '*.py' | xargs wc -l
