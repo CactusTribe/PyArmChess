@@ -57,7 +57,10 @@ class Game():
             self.board.push(move)
 
 def printBoard(board):
-    for i, l in enumerate(board):
+    str_board = str(board)
+    list_board = [str_board[i:i+16].strip("\n").replace(" ","") for i in range(0, len(str_board), 16)]
+
+    for i, l in enumerate(list_board):
         print(8 - i, "|", ' '.join(l))
 
     print("  ", ''.join("-" * 16))
@@ -72,10 +75,10 @@ if __name__ == '__main__':
 
     ChessGame = Game()
     ChessGame.new_game()
-    print(ChessGame.board)
+    printBoard(ChessGame.board)
 
     ChessGame.detect_next_move( old_board_frame, current_board_frame )
     print(" #", ChessGame.next_move)
 
     ChessGame.apply_next_move()
-    print(ChessGame.board)
+    printBoard(ChessGame.board)
