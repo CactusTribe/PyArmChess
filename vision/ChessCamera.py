@@ -1,12 +1,13 @@
 import numpy as np
 import sys, time
 import cv2
-from ChessboardFrame import ChessboardFrame
 from itertools import product
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from scipy.spatial.distance import euclidean
-from constants import *
+
+from vision.ChessboardFrame import ChessboardFrame
+from vision.constants import *
 
 if RUN_ON_PI:
     from picamera.array import PiRGBArray
@@ -35,7 +36,7 @@ class ChessCamera(object):
         return rawCapture.array
 
     def _chessboard_perspective_transform_path(self):
-        return ('chessboard_perspective_transform.npy')
+        return ('vision/chessboard_perspective_transform.npy')
 
     def get_chessboard_perspective_transform(self):
         try:

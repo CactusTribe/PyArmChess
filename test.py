@@ -1,6 +1,6 @@
 import sys, time
-from ChessCamera import ChessCamera
-from constants import *
+from vision.ChessCamera import ChessCamera
+from vision.constants import *
 
 
 def printBoard(board):
