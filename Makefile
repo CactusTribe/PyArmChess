@@ -19,6 +19,7 @@ send:
 	@scp vision/ChessCamera.py joaquim@192.168.1.15:~/pyprojects/PyArmChess/vision/
 	@scp vision/constants.py joaquim@192.168.1.15:~/pyprojects/PyArmChess/vision/
 	@scp vision/test.py joaquim@192.168.1.15:~/pyprojects/PyArmChess/vision/
+	@scp Game.py joaquim@192.168.1.15:~/pyprojects/PyArmChess/
 
 info:
 	find src/ -name '[^]*.py' | xargs wc -l
