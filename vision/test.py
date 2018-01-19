@@ -1,14 +1,16 @@
-import sys,time
+import sys, time
 from ChessCamera import ChessCamera
 from constants import *
 
+
 def printBoard(board):
     for i, l in enumerate(board):
-        print(8-i,"|", ' '.join(l))
+        print(8 - i, "|", ' '.join(l))
 
-    print("  ",''.join("-"*16))
-    print("   ",' '.join("ABCDEFGH"))
+    print("  ", ''.join("-" * 16))
+    print("   ", ' '.join("ABCDEFGH"))
     print("")
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -39,6 +41,6 @@ if __name__ == '__main__':
                 current_board = ChessCamera.current_board_processed()
                 printBoard(current_board)
 
-        #ChessCamera.camera.close()
+        # ChessCamera.camera.close()
     else:
         print("Usage: test <image> (options: -c calibration)")
