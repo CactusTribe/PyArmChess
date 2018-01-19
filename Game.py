@@ -1,7 +1,7 @@
 import chess, sys, time
 
-from vision import ChessCamera
-from vision import *
+from vision.ChessCamera import ChessCamera
+from vision.constants import *
 
 old_board_frame = [
 "BBBBBBBB",
@@ -73,12 +73,37 @@ if __name__ == '__main__':
         print("Usage: Game.py")
         sys.exit(1)
 
+    IMAGE_PATH = "vision/samples/begin.jpg"
+
     ChessGame = Game()
+    ChessCamera = ChessCamera(IMAGE_PATH)
+
     ChessGame.new_game()
     printBoard(ChessGame.board)
 
-    ChessGame.detect_next_move( old_board_frame, current_board_frame )
-    print(" #", ChessGame.next_move)
+    valid_board = None
+    last_valid_board = None
+    old_boards = [None, None, None]
+
+    while True:
+        current_board = ChessCamera.current_board_processed()
+        old_boards.pop(0)
+        old_boards.append(current_board)
+
+        if AVERAGE_BOARD:
+            if old_boards[0] == old_boards[1] and old_boards[1] == old_boards[2]:
+                last_valid_board = valid_board
+                valid_board = current_board
+
+        else:
+            last_valid_board = valid_board
+            valid_board = current_board
+
+        if valid_board != None and last_valid_board != None and valid_board != last_valid_board:
+            ChessGame.detect_next_move( last_valid_board, valid_board )
+            print(" #", ChessGame.next_move)
+
+        time.sleep(1)
 
     ChessGame.apply_next_move()
     printBoard(ChessGame.board)
