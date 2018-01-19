@@ -173,8 +173,8 @@ class ChessCamera(object):
     def canny(self, img):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
-        #img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
+        #img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
+        img = cv2.bilateralFilter(img, CANNY_BLUR, 17, 17)
 
         kernel_sharpen = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
         img = cv2.filter2D(img, -1, kernel_sharpen)
