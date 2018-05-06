@@ -1,0 +1,25 @@
+name: "Run My Tests"
+cmd: "bin/run_tests"
+args:
+  - "{PROJECT_PATH}"
+  - "{FILE_ACTIVE}"
+sh: false
+errorMatch: &testError
+  - "\n +File \"(?<file>.+)\", line (?<line>[0-9]+), in \\S+\n[^\n]+\n(?<message>\\S[^\n]*)"
+
+targets:
+  "Run All Tests":
+    cmd: "bin/run_tests"
+    args:
+      - "{PROJECT_PATH}"
+    sh: false
+    errorMatch: *testError
+
+  lint:
+    cwd: "{PROJECT_PATH}"
+    cmd: "make lint"
+    warningMatch: &lintWarning
+      - "\n(?<file>[^:\n]+):(?<line>[0-9]+):(?<col>[0-9]+): (?<message>[CDIRW][0-9]+ [^\n]+)"
+      - "\n(?<file>[^:\n]+):(?<line>[0-9]+):(?<col>[0-9]+): (?<message>[^\n]+? \\[isort\\])"
+    errorMatch: &lintError
+      - "\n(?<file>[^:\n]+):(?<line>[0-9]+):(?<col>[0-9]+): (?<message>E[0-9]+ [^\n]+)"

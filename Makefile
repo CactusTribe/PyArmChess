@@ -27,3 +27,7 @@ send:
 
 info:
 	find . -name '*.py' | xargs wc -l
+
+.PHONY: lint
+lint:
+	pylint controler *.py --disable=fixme

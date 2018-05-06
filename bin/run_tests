@@ -1,0 +1,6 @@
+#!/bin/sh
+REMOTE_PROJECT="$1"
+REMOTE_FILE="$2"
+
+echo "Test module = $REMOTE_FILE \n"
+exec ./run_tests.py $REMOTE_PROJECT $REMOTE_FILE
