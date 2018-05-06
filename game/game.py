@@ -4,14 +4,15 @@ from vision.ChessCamera import ChessCamera
 from vision.constants import *
 
 default_board = [
-"BBBBBBBB",
-"BBBBBBBB",
-"........",
-"........",
-"........",
-"........",
-"WWWWWWWW",
-"WWWWWWWW"]
+    "BBBBBBBB",
+    "BBBBBBBB",
+    "........",
+    "........",
+    "........",
+    "........",
+    "WWWWWWWW",
+    "WWWWWWWW"]
+
 
 class Game():
 

@@ -2,6 +2,7 @@ import unittest
 
 from game.game import Game
 
+
 class GameTest(unittest.TestCase):
     """GameTest class."""
 
