@@ -1,6 +1,10 @@
-numpy==1.13.3
-opencv-python==3.3.1.11
+linecache2==1.0.0
+numpy==1.14.3
+opencv-python==3.4.0.12
+python-chess==0.23.4
 scikit-learn==0.19.1
-scipy==1.0.0
+scipy==1.1.0
+six==1.11.0
 sklearn==0.0
+traceback2==1.4.0
 unittest2==1.1.0
