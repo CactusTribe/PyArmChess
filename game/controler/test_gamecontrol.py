@@ -2,10 +2,7 @@
 
 import contextlib
 from io import StringIO
-import sys
 import unittest
-
-import chess
 
 
 from game.controler.gamecontrol import GameControl
