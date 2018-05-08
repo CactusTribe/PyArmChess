@@ -2,7 +2,7 @@
 
 
 class Player(object):
-    """Description."""
+    """Player definition."""
 
     def __init__(self, name, human=False):
         """Player initialisation."""

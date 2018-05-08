@@ -1,20 +1,21 @@
 """Board controler"""
 
 import chess
-from game.model.board import Board
+from lib.boardcontrol import InvalidMoveException
 
 
 class BoardControl(object):
     """Interact with model."""
 
-    def __init__(self, chess_board):
+    def __init__(self, board):
         """Board control initialisation."""
-        self.board = chess_board.board
+        self.board = board
         self.next_move = None
 
-    def apply_next_move(self):
+    def apply_move(self, uci_move):
         """Apply the next move to the board."""
-        self.next_move = "e2e4"
-        move = chess.Move.from_uci(self.next_move)
+        move = chess.Move.from_uci(uci_move)
         if move in self.board.legal_moves:
             self.board.push(move)
+        else:
+            raise InvalidMoveException
