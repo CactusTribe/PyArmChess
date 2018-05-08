@@ -16,7 +16,8 @@ if __name__ == '__main__':
             cmd = ["python3", "-m", "unittest", test_name]
             output = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             output = output.communicate()[0].decode("utf-8")
-        except Exception as e:
-            e.printStackTrace()
+            print(output)
+        except Exception as exception:
+            print(exception)
     else:
         print("Usage: run_tests <project> <module>")
