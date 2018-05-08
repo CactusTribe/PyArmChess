@@ -13,7 +13,7 @@ class BoardControl(object):
         self.next_move = None
 
     def apply_move(self, uci_move):
-        """Apply the next move to the board."""
+        """Apply the move to the board."""
         move = chess.Move.from_uci(uci_move)
         if move in self.board.legal_moves:
             self.board.push(move)

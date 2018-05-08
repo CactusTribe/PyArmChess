@@ -9,9 +9,11 @@ errorMatch: &testError
 
 targets:
   "Run All Tests":
-    cmd: "bin/run_tests"
+    cmd: "python3"
     args:
-      - "{PROJECT_PATH}"
+      - "-m"
+      - "unittest"
+      - "discover"
     sh: false
     errorMatch: *testError
 
