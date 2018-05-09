@@ -1,6 +1,5 @@
 """Tests of game.controler.GameControl."""
 
-import contextlib
 from io import StringIO
 import unittest
 
@@ -8,6 +7,7 @@ import unittest
 from game.controler.gamecontrol import GameControl
 from game.controler.playercontrol import PlayerControl
 from game.model.player import Player
+from lib.boardcontrol import InvalidMoveException
 
 
 class GameControlTest(unittest.TestCase):
@@ -42,7 +42,5 @@ class GameControlTest(unittest.TestCase):
 
     def test_apply_move_invalid(self):
         # GameControl.apply_move print the proper error message.
-        with contextlib.redirect_stdout(self.temp_stdout):
+        with self.assertRaises(InvalidMoveException):
             self.game_control.apply_move("e6e8")
-        output = self.temp_stdout.getvalue().strip()
-        self.assertEqual(output, 'Error: Invalid movement.')

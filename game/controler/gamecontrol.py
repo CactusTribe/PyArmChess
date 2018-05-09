@@ -21,8 +21,9 @@ class GameControl(object):
         """Apply the move to the board."""
         try:
             self.boardcontrol.apply_move(uci_move)
+            self.end_round()
         except InvalidMoveException:
-            print("Error: Invalid movement.")
+            raise InvalidMoveException
 
     def end_round(self):
         """Switch the current_player for the next round."""
