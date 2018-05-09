@@ -23,11 +23,15 @@ class PyArmChess(object):
         """Initialisation."""
         self.running = False
         self.interactive = interactive
-        self.commands = {"quit": self.quit,
+        self.commands = {"q": self.quit,
+                         "quit": self.quit,
                          "print": self.print_board,
                          "move": self.set_move}
+
         self.logs = OrderedDict()
         self.log_text(" -> Create new chessboard ...")
+        if self.interactive:
+            print(self.get_last_log())
         self.player_1 = PlayerControl(Player("Foo", human=True))
         self.player_2 = PlayerControl(Player("Bar"))
         self.game_control = GameControl(self.player_1, self.player_2)
@@ -40,8 +44,9 @@ class PyArmChess(object):
                 input_raw = str(input_cmd).strip().split()
                 args_cmd = input_raw[1::]
                 self.execute_command(input_raw[0], *args_cmd)
-            except (ValueError, TypeError, InvalidCommandException) as exc:
+            except Exception as exc:
                 self.log_text(str(exc))
+                print(exc)
 
     def execute_command(self, command, *args):
         if command in self.commands.keys():
@@ -49,13 +54,11 @@ class PyArmChess(object):
             self.commands[command](*args)
         else:
             self.log_text(" -> Invalid command.")
-            raise InvalidCommandException()
+            raise InvalidCommandException(" -> Invalid command.")
 
     def log_text(self, text):
         timestamp = int(time.time())
         self.logs[timestamp] = text
-        if self.interactive:
-            print(text)
 
     def get_last_log(self):
         timestamp = list(self.logs.keys())[-1]
