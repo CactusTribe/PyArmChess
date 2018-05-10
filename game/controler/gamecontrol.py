@@ -14,17 +14,20 @@ class InvalidMoveException(Exception):
 class GameControl(object):
     """Game controler."""
 
+    board = None
+    nb_moves = None
+
     def __init__(self, player_white, player_black):
         """Game initialisation."""
         self.player_white = player_white
         self.player_black = player_black
         self.current_player = player_white
-        self.nb_moves = 0
         self._init_model()
         self._init_engine()
 
     def _init_model(self):
         self.board = chess.Board()
+        self.nb_moves = 0
 
     def _init_engine(self):
         if platform.system() == "Linux":
@@ -33,6 +36,10 @@ class GameControl(object):
             self.engine = uci.popen_engine("bin/stockfish")
         self.engine.uci()
         self.engine.ucinewgame()
+
+    def new_game(self):
+        self.board = chess.Board()
+        self.nb_moves = 0
 
     def compute_best_move(self, movetime):
         """The engine compute the best move from the current position."""

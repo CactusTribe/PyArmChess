@@ -81,11 +81,13 @@ class PyArmChess(object):
         self.print_board()
 
     def play_demo(self):
+        self._init_game()
         while not self.game_control.board.is_game_over():
             move = self.game_control.compute_best_move(10)
             self.game_control.apply_move(move[0])
             self.print_board()
-        print("GameOver : {} moves.".format(self.game_control.nb_moves))
+        if self.interactive:
+            print("GameOver : {} moves.".format(self.game_control.nb_moves))
 
     def quit(self):
         self.running = False
