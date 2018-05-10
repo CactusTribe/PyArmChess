@@ -101,13 +101,3 @@ class PyArmChessTest(unittest.TestCase):
         move = self.pyarmchess.game_control.compute_best_move(10)
         self.pyarmchess.game_control.apply_move(move[0])
         self.pyarmchess.execute_command("move", "e7e5")
-        model = "r n b q k b n r\n" \
-                "p p p p . p p p\n" \
-                ". . . . . . . .\n" \
-                ". . . . p . . .\n" \
-                ". . . . P . . .\n" \
-                ". . . . . . . .\n" \
-                "P P P P . P P P\n" \
-                "R N B Q K B N R"
-        board = self.pyarmchess.get_last_log()
-        self.assertEqual(model, board)
