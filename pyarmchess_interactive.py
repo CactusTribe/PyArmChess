@@ -87,7 +87,9 @@ class PyArmChess(object):
             self.game_control.apply_move(move[0])
             self.print_board()
         if self.interactive:
-            print("GameOver : {} moves.".format(self.game_control.nb_moves))
+            print("GameOver : {} moves. Result : {}"
+                  .format(self.game_control.nb_moves,
+                          self.game_control.board.result()))
 
     def quit(self):
         self.running = False
