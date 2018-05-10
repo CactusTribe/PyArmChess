@@ -95,3 +95,9 @@ class PyArmChessTest(unittest.TestCase):
         # PyArmChess.move raises InvalidMoveException.
         with self.assertRaises(InvalidMoveException):
             self.pyarmchess.execute_command("move", "e8e4")
+
+    def test_play_demo(self):
+        # PyArmChess.play_demo does the right scenario.
+        move = self.pyarmchess.game_control.compute_best_move(10)
+        self.pyarmchess.game_control.apply_move(move[0])
+        self.pyarmchess.execute_command("move", "e7e5")

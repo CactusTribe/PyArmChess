@@ -10,7 +10,7 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 run:
-	python3 Game.py
+	python3 pyarmchess_interactive.py
 
 calib:
 	python3 test.py vision/samples/empty.jpg -c
