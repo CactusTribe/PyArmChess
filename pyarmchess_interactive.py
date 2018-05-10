@@ -27,14 +27,20 @@ class PyArmChess(object):
                          "quit": self.quit,
                          "print": self.print_board,
                          "move": self.set_move}
-
         self.logs = OrderedDict()
+        self._init_game()
+        self._init_chess_camera()
+
+    def _init_game(self):
         self.log_text(" -> Create new chessboard ...")
         if self.interactive:
             print(self.get_last_log())
         self.player_1 = PlayerControl(Player("Foo", human=True))
         self.player_2 = PlayerControl(Player("Bar"))
         self.game_control = GameControl(self.player_1, self.player_2)
+
+    def _init_chess_camera(self):
+        pass
 
     def run(self):
         self.running = True
