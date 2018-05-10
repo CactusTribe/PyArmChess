@@ -31,3 +31,9 @@ info:
 .PHONY: lint
 lint:
 	pylint controler *.py --disable=fixme
+
+tests:
+	python3 -m unittest discover
+
+config:
+	pip install -r requirements.txt
