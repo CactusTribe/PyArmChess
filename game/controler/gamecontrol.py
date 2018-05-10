@@ -27,7 +27,7 @@ class GameControl(object):
 
     def _init_engine(self):
         if platform.system() == "Linux":
-            self.engine = uci.popen_engine("stockfish")
+            self.engine = uci.popen_engine("/usr/bin/stockfish")
         elif platform.system() == "Darwin":
             self.engine = uci.popen_engine("bin/stockfish")
         self.engine.uci()
