@@ -49,8 +49,7 @@ class GameControlTest(unittest.TestCase):
     def test_init_engine(self):
         # GameControl._init_engine sets stockfish engine.
         self.game_control._init_engine()
-        self.assertEqual(self.game_control.engine.name,
-                         "Stockfish 9 64 POPCNT")
+        self.assertTrue(self.game_control.engine.name.startswith("Stockfish"))
 
     def test_compute_best_move(self):
         # GameControl.compute_best_move returns a best move.
