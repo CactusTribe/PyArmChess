@@ -27,7 +27,8 @@ class PyArmChess(object):
                          "quit": self.quit,
                          "print": self.print_board,
                          "move": self.set_move,
-                         "demo": self.play_demo}
+                         "demo": self.play_demo,
+                         "new": self._init_game}
         self.logs = OrderedDict()
         self._init_chess_camera()
         self._init_game()
@@ -37,6 +38,8 @@ class PyArmChess(object):
         self.player_1 = PlayerControl(Player("Foo", human=True))
         self.player_2 = PlayerControl(Player("Bar"))
         self.game_control = GameControl(self.player_1, self.player_2)
+        self.log_text("-" * 80)
+        self.log_text(" ==> White can move. =) (move <uci_move>)")
 
     def _init_chess_camera(self):
         self.log_text(" -> Init ChessCamera ...")
@@ -58,10 +61,10 @@ class PyArmChess(object):
         else:
             raise InvalidCommandException(" -> Invalid command.")
 
-    def log_text(self, text):
+    def log_text(self, text, print_log=True):
         timestamp = int(time.time())
         self.logs[timestamp] = text
-        if self.interactive:
+        if self.interactive and print_log:
             print(text)
 
     def get_last_log(self):
@@ -69,9 +72,19 @@ class PyArmChess(object):
         return self.logs[timestamp]
 
     def print_board(self):
-        self.log_text(str(self.game_control.board))
+        self.log_text(str(self.game_control.board), print_log=False)
         if self.interactive:
-            print(self.game_control.board)
+            str_board = str(self.game_control.board)
+            list_board = [str_board[i:i+16]
+                          .strip("\n")
+                          .replace(" ", "")
+                          for i in range(0, len(str_board), 16)]
+            print("")
+            for index, line in enumerate(list_board):
+                print(8 - index, "|", ' '.join(line))
+            print("  ", ''.join("-" * 16))
+            print("   ", ' '.join("ABCDEFGH"))
+            print("")
 
     def set_move(self, uci_move):
         self.game_control.apply_move(uci_move)
