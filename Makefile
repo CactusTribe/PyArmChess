@@ -2,11 +2,6 @@ PI=pi@joaquim-lefranc.butandsystems.com:~/PyArmChess/
 VERSION=0.1
 arm_config=
 
-ARCH := $(shell arch)
-ifeq ($(ARCH),armv7l)
-	arm_config=echo "ARM"
-endif
-
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	UI_DIR = interface_linux/
@@ -43,4 +38,3 @@ tests:
 
 config:
 	pip install -r requirements.txt
-	@${arm_config}

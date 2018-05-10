@@ -32,6 +32,9 @@ class GameControl(object):
     def _init_engine(self):
         if platform.system() == "Linux":
             self.engine = uci.popen_engine("bin/stockfish-9-popcnt")
+            if platform.machine() == "armv7l":
+                self.engine = uci.popen_engine("bin/stockfish-8-arm-rasp")
+
         elif platform.system() == "Darwin":
             self.engine = uci.popen_engine("bin/stockfish")
         self.engine.uci()
