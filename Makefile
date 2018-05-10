@@ -1,5 +1,11 @@
 PI=pi@joaquim-lefranc.butandsystems.com:~/PyArmChess/
 VERSION=0.1
+arm_config=
+
+ARCH := $(shell arch)
+ifeq ($(ARCH),armv7l)
+	arm_config=echo "ARM"
+endif
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -37,7 +43,4 @@ tests:
 
 config:
 	pip install -r requirements.txt
-	$ARCH = 'arch'
-	if [[ "$ARCH" =~ ^arm ]]; then
-    echo "ARM"
-	fi
+	@${arm_config}
