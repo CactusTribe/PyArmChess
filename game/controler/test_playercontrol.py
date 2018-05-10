@@ -1,5 +1,7 @@
 import unittest
 
+import chess
+
 from game.controler.playercontrol import PlayerControl
 from game.model.player import Player
 
@@ -9,7 +11,7 @@ class PlayerControlTest(unittest.TestCase):
 
     def setUp(self):
         """Init tests."""
-        self.player = Player(name="Joueur1", human=True)
+        self.player = Player("Joueur1", chess.WHITE, human=True)
         self.playercontrol = PlayerControl(self.player)
 
     def test_win_game(self):

@@ -4,6 +4,7 @@
 from io import StringIO
 import unittest
 
+import chess
 
 from game.controler.gamecontrol import GameControl, InvalidMoveException
 from game.controler.playercontrol import PlayerControl
@@ -20,8 +21,8 @@ class GameControlTest(unittest.TestCase):
 
     def setUp(self):
         """Init tests."""
-        self.player_1 = PlayerControl(Player("Foo", human=True))
-        self.player_2 = PlayerControl(Player("Bar"))
+        self.player_1 = PlayerControl(Player("Foo", chess.WHITE, human=True))
+        self.player_2 = PlayerControl(Player("Bar", chess.BLACK))
         self.game_control = GameControl(self.player_1, self.player_2)
         self.temp_stdout = StringIO()
 

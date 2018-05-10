@@ -5,6 +5,8 @@ Run this script to run the game and interact with a prompt.
 import time
 from collections import OrderedDict
 
+import chess
+
 from game.controler.gamecontrol import GameControl
 from game.controler.playercontrol import PlayerControl
 from game.model.player import Player
@@ -30,16 +32,17 @@ class PyArmChess(object):
                          "demo": self.play_demo,
                          "new": self._init_game}
         self.logs = OrderedDict()
+        self.log_text("-"*80)
         self._init_chess_camera()
         self._init_game()
 
     def _init_game(self):
         self.log_text(" -> Create new chessboard ...")
-        self.player_1 = PlayerControl(Player("Foo", human=True))
-        self.player_2 = PlayerControl(Player("Bar"))
+        self.player_1 = PlayerControl(Player("Foo", chess.WHITE, human=True))
+        self.player_2 = PlayerControl(Player("Bar", chess.BLACK))
         self.game_control = GameControl(self.player_1, self.player_2)
-        self.log_text("-" * 80)
-        self.log_text(" ==> White can move. =) (move <uci_move>)")
+        if self.interactive:
+            self.print_player_color()
 
     def _init_chess_camera(self):
         self.log_text(" -> Init ChessCamera ...")
@@ -89,6 +92,8 @@ class PyArmChess(object):
     def set_move(self, uci_move):
         self.game_control.apply_move(uci_move)
         self.print_board()
+        if self.interactive:
+            self.print_player_color()
 
     def play_demo(self):
         self._init_game()
@@ -103,6 +108,12 @@ class PyArmChess(object):
         print("GameOver : {} moves. Result : {}"
               .format(self.game_control.nb_moves,
                       self.game_control.board.result()))
+
+    def print_player_color(self):
+        print(" ==> {} can move. =) (move <uci_move>)\n"
+              .format("White"
+                      if self.game_control.current_player.player.color
+                      else "Black"))
 
     def quit(self):
         self.running = False
