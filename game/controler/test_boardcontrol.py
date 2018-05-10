@@ -15,11 +15,11 @@ class BoardControlTest(unittest.TestCase):
         self.board = chess.Board()
         self.boardcontrol = BoardControl(self.board)
 
-    def test_next_move(self):
+    def test_apply_move(self):
         # BoardControl.apply_move doesn't raises InvalidMoveException.
         self.boardcontrol.apply_move("e2e4")
 
-    def test_next_move_invalid(self):
+    def test_apply_move_invalid(self):
         # BoardControl.apply_move raises InvalidMoveException.
         with self.assertRaises(InvalidMoveException):
             self.boardcontrol.apply_move("e6e8")
