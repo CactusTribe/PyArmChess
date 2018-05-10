@@ -1,6 +1,7 @@
 """Game controler."""
 
 import chess
+import platform
 from chess import uci
 
 
@@ -25,7 +26,10 @@ class GameControl(object):
         self.board = chess.Board()
 
     def _init_engine(self):
-        self.engine = uci.popen_engine("./bin/stockfish")
+        if platform.system() == "Linux":
+            self.engine = uci.popen_engine("bin/stockfish-9-popcnt")
+        elif platform.system() == "Darwin":
+            self.engine = uci.popen_engine("bin/stockfish")
         self.engine.uci()
         self.engine.ucinewgame()
 
