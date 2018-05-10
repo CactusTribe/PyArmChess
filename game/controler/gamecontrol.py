@@ -25,7 +25,7 @@ class GameControl(object):
         self.board = chess.Board()
 
     def _init_engine(self):
-        self.engine = uci.popen_engine("bin/stockfish")
+        self.engine = uci.popen_engine("./bin/stockfish")
         self.engine.uci()
         self.engine.ucinewgame()
 
