@@ -50,8 +50,8 @@ class PyArmChess(object):
     def run(self):
         self.running = True
         while self.running:
-            input_cmd = input("$ ")
             try:
+                input_cmd = input("$ ")
                 input_raw = str(input_cmd).strip().split()
                 args_cmd = input_raw[1::]
                 self.execute_command(input_raw[0], *args_cmd)
