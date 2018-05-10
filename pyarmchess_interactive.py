@@ -26,7 +26,8 @@ class PyArmChess(object):
         self.commands = {"q": self.quit,
                          "quit": self.quit,
                          "print": self.print_board,
-                         "move": self.set_move}
+                         "move": self.set_move,
+                         "demo": self.play_demo}
         self.logs = OrderedDict()
         self._init_game()
         self._init_chess_camera()
@@ -78,6 +79,13 @@ class PyArmChess(object):
     def set_move(self, uci_move):
         self.game_control.apply_move(uci_move)
         self.print_board()
+
+    def play_demo(self):
+        while not self.game_control.board.is_game_over():
+            move = self.game_control.compute_best_move(10)
+            self.game_control.apply_move(move[0])
+            self.print_board()
+        print("GameOver : {} moves.".format(self.game_control.nb_moves))
 
     def quit(self):
         self.running = False

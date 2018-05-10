@@ -55,4 +55,3 @@ class GameControlTest(unittest.TestCase):
         # GameControl.compute_best_move returns a best move.
         best_move = self.game_control.compute_best_move()
         self.assertNotEqual(best_move, None)
-        self.game_control.apply_move(str(best_move[0]))

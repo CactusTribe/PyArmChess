@@ -1,7 +1,7 @@
 """Game controler."""
 
-import chess
 import platform
+import chess
 from chess import uci
 
 
@@ -19,6 +19,7 @@ class GameControl(object):
         self.player_white = player_white
         self.player_black = player_black
         self.current_player = player_white
+        self.nb_moves = 0
         self._init_model()
         self._init_engine()
 
@@ -33,18 +34,19 @@ class GameControl(object):
         self.engine.uci()
         self.engine.ucinewgame()
 
-    def compute_best_move(self):
+    def compute_best_move(self, movetime):
         """The engine compute the best move from the current position."""
-        return self.engine.go(movetime=2000)
+        return self.engine.go(movetime=movetime)
 
     def apply_move(self, uci_move):
         """Apply the move to the board."""
         try:
-            move = chess.Move.from_uci(uci_move)
+            move = chess.Move.from_uci(str(uci_move))
             if move in self.board.legal_moves:
                 self.board.push(move)
                 self.engine.position(self.board)
                 self.end_round()
+                self.nb_moves += 1
             else:
                 raise InvalidMoveException
         except (Exception, InvalidMoveException):
