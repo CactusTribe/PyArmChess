@@ -29,19 +29,17 @@ class PyArmChess(object):
                          "move": self.set_move,
                          "demo": self.play_demo}
         self.logs = OrderedDict()
-        self._init_game()
         self._init_chess_camera()
+        self._init_game()
 
     def _init_game(self):
         self.log_text(" -> Create new chessboard ...")
-        if self.interactive:
-            print(self.get_last_log())
         self.player_1 = PlayerControl(Player("Foo", human=True))
         self.player_2 = PlayerControl(Player("Bar"))
         self.game_control = GameControl(self.player_1, self.player_2)
 
     def _init_chess_camera(self):
-        pass
+        self.log_text(" -> Init ChessCamera ...")
 
     def run(self):
         self.running = True
@@ -53,19 +51,18 @@ class PyArmChess(object):
                 self.execute_command(input_raw[0], *args_cmd)
             except Exception as exc:
                 self.log_text(str(exc))
-                print(exc)
 
     def execute_command(self, command, *args):
         if command in self.commands.keys():
-            self.log_text(command + str(args))
             self.commands[command](*args)
         else:
-            self.log_text(" -> Invalid command.")
             raise InvalidCommandException(" -> Invalid command.")
 
     def log_text(self, text):
         timestamp = int(time.time())
         self.logs[timestamp] = text
+        if self.interactive:
+            print(text)
 
     def get_last_log(self):
         timestamp = list(self.logs.keys())[-1]
@@ -87,9 +84,12 @@ class PyArmChess(object):
             self.game_control.apply_move(move[0])
             self.print_board()
         if self.interactive:
-            print("GameOver : {} moves. Result : {}"
-                  .format(self.game_control.nb_moves,
-                          self.game_control.board.result()))
+            self.print_scores()
+
+    def print_scores(self):
+        print("GameOver : {} moves. Result : {}"
+              .format(self.game_control.nb_moves,
+                      self.game_control.board.result()))
 
     def quit(self):
         self.running = False

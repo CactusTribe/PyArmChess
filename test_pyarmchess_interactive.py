@@ -38,10 +38,8 @@ class PyArmChessTest(unittest.TestCase):
 
     def test_run_main(self):
         # PyArmChess runs without errors.
-        output = self.get_ouput()
-        output = output.split("\n")
-        output = output[0].strip().replace("$ ", "")
-        self.assertEqual(output, "-> Create new chessboard ...")
+        output = self.pyarmchess.get_last_log()
+        self.assertEqual(output, " -> Create new chessboard ...")
 
     def test_invalid_command(self):
         # PyArmChess.execute_command raises InvalidCommandException.
