@@ -6,7 +6,7 @@ import subprocess
 from contextlib import contextmanager
 
 from pyarmchess_interactive import InvalidCommandException, PyArmChess
-from lib.boardcontrol import InvalidMoveException
+from game.controler.gamecontrol import InvalidMoveException
 
 
 class PyArmChessTest(unittest.TestCase):

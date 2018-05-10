@@ -1,13 +1,13 @@
+# pylint: disable = protected-access
 """Tests of game.controler.GameControl."""
 
 from io import StringIO
 import unittest
 
 
-from game.controler.gamecontrol import GameControl
+from game.controler.gamecontrol import GameControl, InvalidMoveException
 from game.controler.playercontrol import PlayerControl
 from game.model.player import Player
-from lib.boardcontrol import InvalidMoveException
 
 
 class GameControlTest(unittest.TestCase):
@@ -44,3 +44,15 @@ class GameControlTest(unittest.TestCase):
         # GameControl.apply_move print the proper error message.
         with self.assertRaises(InvalidMoveException):
             self.game_control.apply_move("e6e8")
+
+    def test_init_engine(self):
+        # GameControl._init_engine sets stockfish engine.
+        self.game_control._init_engine()
+        self.assertEqual(self.game_control.engine.name,
+                         "Stockfish 9 64 POPCNT")
+
+    def test_compute_best_move(self):
+        # GameControl.compute_best_move returns a best move.
+        best_move = self.game_control.compute_best_move()
+        self.assertNotEqual(best_move, None)
+        self.game_control.apply_move(str(best_move[0]))
