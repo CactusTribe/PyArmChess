@@ -37,3 +37,7 @@ tests:
 
 config:
 	pip install -r requirements.txt
+	$ARCH = 'arch'
+	if [[ "$ARCH" =~ ^arm ]]; then
+    echo "ARM"
+	fi
