@@ -4,5 +4,9 @@ python:
 cache: pip
 install:
   - pip install -r requirements.txt
+  - add-apt-repository ppa:ubuntu-toolchain-r/test
+  - apt-get update
+  - apt-get install gcc-4.9
+  - apt-get upgrade libstdc++6
 script:
   - python3 -m unittest discover
