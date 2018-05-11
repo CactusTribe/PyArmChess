@@ -13,7 +13,9 @@ CAMERA_ISO = 200
 CAMERA_COMP = 10
 CAMERA_BRIGHTNESS = 50
 DIR_SAMPLES = "vision/samples/"
-TRANSFORM_PATH = "vision/chessboard_perspective_transform.npy"
+DIR_OUTPUT = "vision/output/"
+CALIB_PATH = DIR_OUTPUT + "calibration/"
+TRANSFORM_PATH = CALIB_PATH + "chessboard_perspective_transform.npy"
 
 # IMAGE PROCESS
 RESCALE_RATIO = 1.015

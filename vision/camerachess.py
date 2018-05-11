@@ -9,11 +9,12 @@ import cv2
 import numpy as np
 
 from vision.cameraframe import CameraFrame
-from vision.calibration_process import CalibrationProcess
+from vision.calibrationprocess import CalibrationProcess
+from vision.imageprocess import ImageProcess
 
 from vision.constants import (
     CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_ISO, CAMERA_COMP, CAMERA_BRIGHTNESS,
-    DIR_SAMPLES, TRANSFORM_PATH, BOARD_SIZE, RESCALE_RATIO)
+    DIR_SAMPLES, TRANSFORM_PATH, CALIB_PATH, BOARD_SIZE, RESCALE_RATIO)
 
 from vision.exceptions import (
     CalibrationRequiredException, SampleNotFoundException,
@@ -31,6 +32,7 @@ class CameraChess(object):
         """Initialisation."""
         self.run_on_rasp = run_on_rasp
         self.calibration_process = CalibrationProcess()
+        self.image_process = ImageProcess()
         if self.run_on_rasp:
             try:
                 self._init_picamera()
@@ -92,14 +94,16 @@ class CameraChess(object):
         matrice = self.calibration_process.compute_transformation(prediction)
         np.save(self._chessboard_perspective_transform_path(), matrice)
 
+    def save_frame(self, path, frame):
+        cv2.imwrite(path, frame.img)
+
     def get_raw_frame(self):
         """Return a raw image in bgr format from camera."""
         raw_capture = PiRGBArray(self.camera)
         self.camera.capture(raw_capture, format="bgr")
         return raw_capture.array
 
-    def get_frame(self):
-        frame = self.get_raw_frame()
+    def _compute_frame(self, frame):
         matrice = self.get_chessboard_perspective_transform()
         frame = cv2.warpPerspective(frame, matrice, (BOARD_SIZE, BOARD_SIZE))
         # RESCALE
@@ -111,6 +115,14 @@ class CameraChess(object):
         frame = img_scaled[offset_h:(height + offset_h),
                            offset_w:(width + offset_w)]
         return CameraFrame(frame)
+
+    def get_frame(self):
+        frame = self.get_raw_frame()
+        return self._compute_frame(frame)
+
+    def get_frame_from_file(self, file_image):
+        frame = cv2.imread(file_image)
+        return self._compute_frame(frame)
 
     def get_edged_frame(self):
         frame = self.get_frame()

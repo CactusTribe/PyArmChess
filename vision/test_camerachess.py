@@ -7,7 +7,7 @@ import unittest
 from vision.camerachess import (
     CameraChess, CalibrationRequiredException)
 
-from vision.constants import TRANSFORM_PATH
+from vision.constants import CALIB_PATH, TRANSFORM_PATH
 
 
 class CameraChessTest(unittest.TestCase):
@@ -26,9 +26,15 @@ class CameraChessTest(unittest.TestCase):
         # CameraChess.get_chessboard_perspective_transform raises
         # CalibrationRequiredException.
         os.remove(TRANSFORM_PATH)
+        self.assertFalse(os.path.exists(TRANSFORM_PATH))
         with self.assertRaises(CalibrationRequiredException):
             self.camerachess.get_chessboard_perspective_transform()
 
     def test_calibration(self):
         # CameraChess.calibration create the calibration file.
         self.camerachess.calibration()
+        self.assertTrue(os.path.exists(TRANSFORM_PATH))
+        frame = self.camerachess.get_frame_from_file(
+            self.camerachess.samples["empty"])
+        self.camerachess.save_frame(CALIB_PATH + "calibration.jpg", frame)
+        self.assertTrue(os.path.exists(CALIB_PATH + "calibration.jpg"))
