@@ -58,5 +58,3 @@ class CameraChessTest(unittest.TestCase):
         self.camerachess.calibration()
         frame = self.camerachess.get_processed_frame(
             self.camerachess.samples["board1"])
-        self.camerachess.image_process.save_image(
-            PROCESSED_PATH + "edged.jpg", frame.image)
