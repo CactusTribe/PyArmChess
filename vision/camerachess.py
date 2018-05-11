@@ -5,23 +5,19 @@ import os
 import platform
 import time
 
-from itertools import product
-
 import cv2
 import numpy as np
 
-from scipy.spatial.distance import euclidean
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
+from vision.cameraframe import CameraFrame
+from vision.calibration_process import CalibrationProcess
 
 from vision.constants import (
     CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_ISO, CAMERA_COMP, CAMERA_BRIGHTNESS,
-    DIR_SAMPLES, TRANSFORM_PATH)
+    DIR_SAMPLES, TRANSFORM_PATH, BOARD_SIZE, RESCALE_RATIO)
 
 from vision.exceptions import (
     CalibrationRequiredException, SampleNotFoundException,
-    PicameraNotFoundException, ChessBoardNotFoundException,
-    CameraNotCenteredException)
+    PicameraNotFoundException)
 
 if platform.machine() == 'armv7l':
     from picamera import PiCamera
@@ -34,6 +30,7 @@ class CameraChess(object):
     def __init__(self, run_on_rasp=False):
         """Initialisation."""
         self.run_on_rasp = run_on_rasp
+        self.calibration_process = CalibrationProcess()
         if self.run_on_rasp:
             try:
                 self._init_picamera()
@@ -73,12 +70,6 @@ class CameraChess(object):
             raise CalibrationRequiredException(
                 " -> CameraChess: Camera position recalibration required.")
 
-    def get_frame(self):
-        """Return a raw image in bgr format from camera."""
-        raw_capture = PiRGBArray(self.camera)
-        self.camera.capture(raw_capture, format="bgr")
-        return raw_capture.array
-
     def calibration(self):
         """Compute the transformation matrice.
 
@@ -86,7 +77,7 @@ class CameraChess(object):
         """
         try:
             if self.run_on_rasp:
-                frame = self.get_frame()
+                frame = self.get_raw_frame()
             else:
                 frame = cv2.imread(self.samples["empty"])
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -96,60 +87,32 @@ class CameraChess(object):
             raise SampleNotFoundException(
                 "Unable to find empty sample for the calibration.")
 
-        chessboard = self._find_chessboard(frame)
-        prediction = self._predict_transformation(chessboard)
-        self._compute_transformation(prediction)
+        chessboard = self.calibration_process.find_chessboard(frame)
+        prediction = self.calibration_process.predict_transform(chessboard)
+        matrice = self.calibration_process.compute_transformation(prediction)
+        np.save(self._chessboard_perspective_transform_path(), matrice)
 
-    def _find_chessboard(self, frame):
-        found, corners = cv2.findChessboardCorners(
-            frame, (7, 7),
-            flags=cv2.CALIB_CB_NORMALIZE_IMAGE | cv2.CALIB_CB_ADAPTIVE_THRESH)
-        if not found:
-            raise ChessBoardNotFoundException()
-        reshape = corners.reshape((49, 2))
-        board_center = reshape[24]
-        frame_center = frame.shape[1] / 2.0, frame.shape[0] / 2.0
-        if euclidean(board_center, frame_center) < 10.0:
-            raise CameraNotCenteredException()
-        return reshape
+    def get_raw_frame(self):
+        """Return a raw image in bgr format from camera."""
+        raw_capture = PiRGBArray(self.camera)
+        self.camera.capture(raw_capture, format="bgr")
+        return raw_capture.array
 
-    def _predict_transformation(self, chessboard):
-        x_train = np.array(list(product(np.linspace(-3, 3, 7),
-                                        np.linspace(-3, 3, 7))))
-        poly = PolynomialFeatures(degree=4)
-        x_train = poly.fit_transform(x_train)
-        m_x = LinearRegression()
-        m_x.fit(x_train, chessboard[:, 0])
-        m_y = LinearRegression()
-        m_y.fit(x_train, chessboard[:, 1])
-        return (m_x, m_y, poly)
+    def get_frame(self):
+        frame = self.get_raw_frame()
+        matrice = self.get_chessboard_perspective_transform()
+        frame = cv2.warpPerspective(frame, matrice, (BOARD_SIZE, BOARD_SIZE))
+        # RESCALE
+        height, width = frame.shape[:2]
+        img_scaled = cv2.resize(frame, (0, 0),
+                                fx=RESCALE_RATIO, fy=RESCALE_RATIO)
+        offset_h = int(((height * RESCALE_RATIO) - height) / 2)
+        offset_w = int(((width * RESCALE_RATIO) - width) / 2)
+        frame = img_scaled[offset_h:(height + offset_h),
+                           offset_w:(width + offset_w)]
+        return CameraFrame(frame)
 
-    def _compute_transformation(self, prediction):
-        # pylint: disable = invalid-name
-        m_x = prediction[0]
-        m_y = prediction[1]
-        poly = prediction[2]
-
-        def predict(i, j):
-            features = poly.fit_transform(np.array([[i, j]]))
-            return m_x.predict(features), m_y.predict(features)
-
-        P = []
-        Q = []
-        x, y = predict(4.0, 4.0)
-        P.append((x[0], y[0]))
-        Q.append((0.0, 0.0))
-        x, y = predict(-4.0, 4.0)
-        P.append((x[0], y[0]))
-        Q.append((0.0, 480.0))
-        x, y = predict(4.0, -4.0)
-        P.append((x[0], y[0]))
-        Q.append((480.0, 0.0))
-        x, y = predict(-4.0, -4.0)
-        P.append((x[0], y[0]))
-        Q.append((480.0, 480.0))
-
-        Q = np.array(Q, np.float32)
-        P = np.array(P, np.float32).reshape(Q.shape)
-        M = cv2.getPerspectiveTransform(P, Q)
-        np.save(self._chessboard_perspective_transform_path(), M)
+    def get_edged_frame(self):
+        frame = self.get_frame()
+        edged = self.canny(frame.img)
+        return CameraFrame(edged)
