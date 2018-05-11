@@ -58,3 +58,13 @@ class CameraChessTest(unittest.TestCase):
         self.camerachess.calibration()
         frame = self.camerachess.get_processed_frame(
             self.camerachess.samples["board1"])
+
+    def test_preprocess_canny(self):
+        self.camerachess.calibration()
+        frame = self.camerachess.get_frame_from_file(
+            self.camerachess.samples["board1"])
+        gray = self.camerachess.image_process.preprocess_canny(frame.image)
+        self.camerachess.image_process.save_image(
+            PROCESSED_PATH + "pre_canny.jpg", gray)
+        self.assertTrue(os.path.exists(
+            PROCESSED_PATH + "pre_canny.jpg"))

@@ -27,13 +27,17 @@ class ImageProcess(object):
         edged = cv2.Canny(image, lower, upper)
         return edged
 
-    def canny(self, image):
-        """Apply the canny filter to the image."""
+    def preprocess_canny(self, image):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # img = cv2.GaussianBlur(img, (CANNY_BLUR,CANNY_BLUR), 0)
         image = cv2.bilateralFilter(image, CANNY_BLUR, 17, 17)
         kernel_sharpen = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
         image = cv2.filter2D(image, -1, kernel_sharpen)
+        return image
+
+    def canny(self, image):
+        """Apply the canny filter to the image."""
+        image = self.preprocess_canny(image)
         edged = cv2.Canny(image, CANNY_LOWER, CANNY_UPPER)
         # edged = self.auto_canny(img, CANNY_SIGMA)
         edged = cv2.dilate(edged, None)
