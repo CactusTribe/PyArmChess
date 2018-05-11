@@ -72,3 +72,6 @@ class ImageProcess(object):
         else:
             masked_draw = None
         return masked, masked_draw
+
+    def save_image(self, path, image):
+        cv2.imwrite(path, image)

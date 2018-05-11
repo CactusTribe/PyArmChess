@@ -14,7 +14,8 @@ from vision.imageprocess import ImageProcess
 
 from vision.constants import (
     CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_ISO, CAMERA_COMP, CAMERA_BRIGHTNESS,
-    DIR_SAMPLES, TRANSFORM_PATH, CALIB_PATH, BOARD_SIZE, RESCALE_RATIO)
+    DIR_SAMPLES, TRANSFORM_PATH, BOARD_SIZE, RESCALE_RATIO,
+    THRESHOLD_PRESENCE, THRESHOLD_BINARY, THRESHOLD_COLOR)
 
 from vision.exceptions import (
     CalibrationRequiredException, SampleNotFoundException,
@@ -94,9 +95,6 @@ class CameraChess(object):
         matrice = self.calibration_process.compute_transformation(prediction)
         np.save(self._chessboard_perspective_transform_path(), matrice)
 
-    def save_frame(self, path, frame):
-        cv2.imwrite(path, frame.img)
-
     def get_raw_frame(self):
         """Return a raw image in bgr format from camera."""
         raw_capture = PiRGBArray(self.camera)
@@ -124,7 +122,45 @@ class CameraChess(object):
         frame = cv2.imread(file_image)
         return self._compute_frame(frame)
 
-    def get_edged_frame(self):
-        frame = self.get_frame()
-        edged = self.canny(frame.img)
+    def get_edged_frame(self, *args):
+        if self.run_on_rasp:
+            frame = self.get_frame()
+        else:
+            frame = self.get_frame_from_file(args[0])
+        edged = self.image_process.canny(frame.image)
         return CameraFrame(edged)
+
+    def get_processed_frame(self, *args):
+        if self.run_on_rasp:
+            current = self.get_frame()
+        else:
+            current = self.get_frame_from_file(args[0])
+        edged = self.get_edged_frame(*args)
+        current.image = cv2.cvtColor(current.image, cv2.COLOR_BGR2GRAY)
+        current.image = cv2.bilateralFilter(current.image, 13, 17, 17)
+        current.image = cv2.equalizeHist(current.image)
+        edged_square_list = [
+            edged.square_at(j, i) for i in range(8) for j in range(8)]
+        current_square_list = [
+            current.square_at(j, i) for i in range(8) for j in range(8)]
+        board = []
+        for (current_square, edged_square) in \
+                zip(current_square_list, edged_square_list):
+            board.append(
+                self.get_piece_on_square(current_square, edged_square))
+        return board
+
+    def get_piece_on_square(self, current_square, edged_square):
+        if cv2.countNonZero(edged_square.image) > THRESHOLD_PRESENCE:
+            masked, masked_draw = self.image_process.mask(
+                current_square.image, edged_square.image)
+            _, thres = cv2.threshold(masked, THRESHOLD_BINARY,
+                                     255, cv2.THRESH_BINARY)
+            height, width = thres.shape
+            count_white = cv2.countNonZero(thres)
+            count_black = height * width - count_white
+            if count_black > THRESHOLD_COLOR:
+                return "B"
+            return "W"
+        else:
+            return "."

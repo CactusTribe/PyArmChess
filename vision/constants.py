@@ -15,6 +15,7 @@ CAMERA_BRIGHTNESS = 50
 DIR_SAMPLES = "vision/samples/"
 DIR_OUTPUT = "vision/output/"
 CALIB_PATH = DIR_OUTPUT + "calibration/"
+PROCESSED_PATH = DIR_OUTPUT + "processed/"
 TRANSFORM_PATH = CALIB_PATH + "chessboard_perspective_transform.npy"
 
 # IMAGE PROCESS

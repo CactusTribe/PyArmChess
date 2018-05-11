@@ -7,7 +7,7 @@ import unittest
 from vision.camerachess import (
     CameraChess, CalibrationRequiredException)
 
-from vision.constants import CALIB_PATH, TRANSFORM_PATH
+from vision.constants import CALIB_PATH, PROCESSED_PATH, TRANSFORM_PATH
 
 
 class CameraChessTest(unittest.TestCase):
@@ -36,5 +36,27 @@ class CameraChessTest(unittest.TestCase):
         self.assertTrue(os.path.exists(TRANSFORM_PATH))
         frame = self.camerachess.get_frame_from_file(
             self.camerachess.samples["empty"])
-        self.camerachess.save_frame(CALIB_PATH + "calibration.jpg", frame)
+        self.camerachess.image_process.save_image(
+            CALIB_PATH + "calibration.jpg", frame.image)
         self.assertTrue(os.path.exists(CALIB_PATH + "calibration.jpg"))
+
+    def test_get_edged(self):
+        # CameraChess.get_edged_frame create the edged file.
+        self.camerachess.calibration()
+        frame = self.camerachess.get_edged_frame(
+            self.camerachess.samples["board1"])
+        self.camerachess.image_process.save_image(
+            PROCESSED_PATH + "edged.jpg", frame.image)
+        self.assertTrue(os.path.exists(PROCESSED_PATH + "edged.jpg"))
+
+    def test_get_processed_frame(self):
+        # CameraChess.get_processed_frame create all processing files.
+        # if DEBUG and MASK_DRAW:
+        #     cv2.imwrite("output/squares/{}.jpg".format(current_square.position), masked_draw)
+        # if DEBUG and not MASK_DRAW:
+        #     cv2.imwrite("output/squares/{}.jpg".format(current_square.position), thres)
+        self.camerachess.calibration()
+        frame = self.camerachess.get_processed_frame(
+            self.camerachess.samples["board1"])
+        self.camerachess.image_process.save_image(
+            PROCESSED_PATH + "edged.jpg", frame.image)
