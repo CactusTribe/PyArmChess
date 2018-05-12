@@ -136,9 +136,7 @@ class CameraChess(object):
         else:
             current = self.get_frame_from_file(args[0])
         edged = self.get_edged_frame(*args)
-        current.image = cv2.cvtColor(current.image, cv2.COLOR_BGR2GRAY)
-        current.image = cv2.bilateralFilter(current.image, 13, 17, 17)
-        current.image = cv2.equalizeHist(current.image)
+        current.image = self.image_process.preprocess_mask(current.image)
         edged_square_list = [
             edged.square_at(j, i) for i in range(8) for j in range(8)]
         current_square_list = [
@@ -152,12 +150,11 @@ class CameraChess(object):
 
     def get_piece_on_square(self, current_square, edged_square):
         if cv2.countNonZero(edged_square.image) > THRESHOLD_PRESENCE:
-            masked, masked_draw = self.image_process.mask(
+            masked, _masked_draw = self.image_process.mask(
                 current_square.image, edged_square.image)
-            _, thres = cv2.threshold(masked, THRESHOLD_BINARY,
-                                     255, cv2.THRESH_BINARY)
-            height, width = thres.shape
-            count_white = cv2.countNonZero(thres)
+            threshold = self.image_process.threshold(masked)
+            height, width = threshold.shape
+            count_white = cv2.countNonZero(threshold)
             count_black = height * width - count_white
             if count_black > THRESHOLD_COLOR:
                 return "B"

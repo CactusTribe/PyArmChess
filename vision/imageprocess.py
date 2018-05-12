@@ -5,7 +5,7 @@ import numpy as np
 
 from vision.constants import (
     CANNY_BLUR, CANNY_LOWER, CANNY_UPPER, MASK_DILATE_ITER,
-    MASK_ERODE_ITER, MASK_BLUR, MASK_DRAW)
+    MASK_ERODE_ITER, MASK_BLUR, THRESHOLD_BINARY)
 
 
 class ImageProcess(object):
@@ -44,17 +44,14 @@ class ImageProcess(object):
         edged = cv2.erode(edged, None)
         return edged
 
+    def preprocess_mask(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = cv2.bilateralFilter(image, 13, 17, 17)
+        image = cv2.equalizeHist(image)
+        return image
+
     def mask(self, image, edges):
-        _img, contours, _hierarchy = cv2.findContours(
-            edges.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-        # Find largest contour
-        max_perimetre = 0.0
-        max_contour = None
-        for contour in contours:
-            perimetre = cv2.arcLength(contour, False)
-            if perimetre >= max_perimetre:
-                max_perimetre = perimetre
-                max_contour = contour
+        max_contour = self.find_max_contours(edges)
         mask = np.zeros(edges.shape, dtype=np.uint8)
         hull = cv2.convexHull(max_contour)
         cv2.fillConvexPoly(mask, hull, (255))
@@ -69,13 +66,33 @@ class ImageProcess(object):
         bk_masked = cv2.bitwise_and(background, background, mask=mask)
         # combine masked foreground and masked background
         masked = cv2.bitwise_or(fg_masked, bk_masked)
-        if MASK_DRAW:
-            masked_draw = cv2.drawContours(
-                masked.copy(), [hull], 0,
-                (0, 255, 0), 2, cv2.LINE_AA, maxLevel=1)
-        else:
-            masked_draw = None
+        masked_draw = self.draw_contours(masked, hull)
         return masked, masked_draw
+
+    def find_max_contours(self, edged):
+        _img, contours, _hierarchy = cv2.findContours(
+            edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        # Find largest contour
+        max_perimetre = 0.0
+        max_contour = None
+        for contour in contours:
+            perimetre = cv2.arcLength(contour, False)
+            if perimetre >= max_perimetre:
+                max_perimetre = perimetre
+                max_contour = contour
+        return max_contour
+
+    def draw_contours(self, masked, convex_hull):
+        masked = cv2.cvtColor(masked, cv2.COLOR_GRAY2BGR)
+        masked_draw = cv2.drawContours(
+            masked.copy(), [convex_hull], 0,
+            (0, 255, 0), 2, cv2.LINE_AA, maxLevel=1)
+        return masked_draw
+
+    def threshold(self, masked):
+        _, thres = cv2.threshold(masked, THRESHOLD_BINARY,
+                                 255, cv2.THRESH_BINARY)
+        return thres
 
     def save_image(self, path, image):
         cv2.imwrite(path, image)
