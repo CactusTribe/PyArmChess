@@ -50,16 +50,6 @@ class CameraChessTest(unittest.TestCase):
             PROCESSED_PATH + "edged.jpg", frame.image)
         self.assertTrue(os.path.exists(PROCESSED_PATH + "edged.jpg"))
 
-    def test_get_processed_frame(self):
-        # CameraChess.get_processed_frame create all processing files.
-        # if DEBUG and MASK_DRAW:
-        #     cv2.imwrite("output/squares/{}.jpg".format(current_square.position), masked_draw)
-        # if DEBUG and not MASK_DRAW:
-        #     cv2.imwrite("output/squares/{}.jpg".format(current_square.position), thres)
-        self.camerachess.calibration()
-        frame = self.camerachess.get_processed_frame(
-            self.camerachess.samples["board1"])
-
     def test_preprocess_canny(self):
         self.camerachess.calibration()
         frame = self.camerachess.get_frame_from_file(
