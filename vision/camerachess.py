@@ -161,3 +161,31 @@ class CameraChess(object):
             return "W"
         else:
             return "."
+
+    def capture_move(self):
+        frame_1 = self.get_processed_frame(
+            self.samples["board1"])
+        frame_2 = self.get_processed_frame(
+            self.samples["board2"])
+        return self._detect_move(frame_1, frame_2)
+
+    def _detect_move(self, board_1, board_2):
+        if not board_1 or not board_2:
+            return ""
+        old_position = None
+        new_position = None
+        print("## Compute next move...")
+        for row in range(8):
+            line_b1 = "".join(board_1[row])
+            line_b2 = "".join(board_2[row])
+            line_diff = [(str(chr(97 + col)), 8 - row)
+                         for col in range(len(line_b1))
+                         if line_b1[col] != line_b2[col]]
+            if line_diff != []:
+                fst_diff = line_diff[0]
+                if line_b2[ord(fst_diff[0])-97] == ".":
+                    old_position = "{}{}".format(fst_diff[0], fst_diff[1])
+                else:
+                    new_position = "{}{}".format(fst_diff[0], fst_diff[1])
+
+        return "{}{}".format(old_position, new_position)

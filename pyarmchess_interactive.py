@@ -31,14 +31,15 @@ class PyArmChess(object):
                          "print": self.print_board,
                          "move": self.set_move,
                          "demo": self.play_demo,
-                         "new": self._init_game}
+                         "new": self._init_game,
+                         "capture": self.capture_from_camera}
         self.logs = OrderedDict()
         self.log_text("-"*80)
         self._init_chess_camera()
         self._init_game()
 
     def _init_game(self):
-        self.log_text(" -> Create new chessboard ...")
+        self.log_text(" ## Create new chessboard ...")
         self.player_1 = PlayerControl(Player("Foo", chess.WHITE, human=True))
         self.player_2 = PlayerControl(Player("Bar", chess.BLACK))
         self.game_control = GameControl(self.player_1, self.player_2)
@@ -46,10 +47,10 @@ class PyArmChess(object):
             self.print_player_color()
 
     def _init_chess_camera(self):
-        self.log_text(" -> Init ChessCamera ...")
-        self.camera = CameraChess()
-        self.log_text("    [*] Calibration ")
-        self.camera.calibration()
+        self.log_text(" ## Init ChessCamera ...")
+        self.camerachess = CameraChess()
+        self.log_text("  - Calibration ")
+        self.camerachess.calibration()
 
     def run(self):
         self.running = True
@@ -107,6 +108,10 @@ class PyArmChess(object):
             self.print_board()
         if self.interactive:
             self.print_scores()
+
+    def capture_from_camera(self):
+        move = self.camerachess.capture_move()
+        self.set_move(move)
 
     def print_scores(self):
         print("GameOver : {} moves. Result : {}"
