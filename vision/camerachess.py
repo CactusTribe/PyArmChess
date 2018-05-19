@@ -183,9 +183,8 @@ class CameraChess(object):
                          if line_b1[col] != line_b2[col]]
             if line_diff != []:
                 fst_diff = line_diff[0]
-                if line_b2[ord(fst_diff[0])-97] == ".":
+                if line_b2[ord(fst_diff[0]) - 97] == ".":
                     old_position = "{}{}".format(fst_diff[0], fst_diff[1])
                 else:
                     new_position = "{}{}".format(fst_diff[0], fst_diff[1])
-
         return "{}{}".format(old_position, new_position)
