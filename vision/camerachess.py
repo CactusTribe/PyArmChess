@@ -15,7 +15,7 @@ from vision.imageprocess import ImageProcess
 from vision.constants import (
     CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_ISO, CAMERA_COMP, CAMERA_BRIGHTNESS,
     DIR_SAMPLES, TRANSFORM_PATH, BOARD_SIZE, RESCALE_RATIO,
-    THRESHOLD_PRESENCE, THRESHOLD_BINARY, THRESHOLD_COLOR)
+    THRESHOLD_PRESENCE, THRESHOLD_COLOR)
 
 from vision.exceptions import (
     CalibrationRequiredException, SampleNotFoundException,

@@ -10,6 +10,7 @@ import chess
 from game.controler.gamecontrol import GameControl
 from game.controler.playercontrol import PlayerControl
 from game.model.player import Player
+from vision.camerachess import CameraChess
 
 
 class InvalidCommandException(Exception):
@@ -46,6 +47,9 @@ class PyArmChess(object):
 
     def _init_chess_camera(self):
         self.log_text(" -> Init ChessCamera ...")
+        self.camera = CameraChess()
+        self.log_text("    [*] Calibration ")
+        self.camera.calibration()
 
     def run(self):
         self.running = True

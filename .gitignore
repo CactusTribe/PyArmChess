@@ -1,4 +1,4 @@
-.DS_Store
+*/*/.DS_Store
 vision/*.jpg
 vision/output/squares/*.jpg
 vision/output/*.jpg

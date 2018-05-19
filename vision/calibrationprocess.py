@@ -1,6 +1,7 @@
 """Functions camera calibration"""
 
 from itertools import product
+import warnings
 
 import cv2
 import numpy as np
@@ -11,6 +12,13 @@ from sklearn.preprocessing import PolynomialFeatures
 
 from vision.exceptions import (
     ChessBoardNotFoundException, CameraNotCenteredException)
+
+# Useful to silent warning of LAPACK.
+# See https://github.com/scipy/scipy/issues/5998
+warnings.filterwarnings(action="ignore", module="scipy",
+                        message="^internal gelsd")
+warnings.filterwarnings(action="ignore", module="sklearn",
+                        message="^internal gelsd")
 
 
 class CalibrationProcess(object):
